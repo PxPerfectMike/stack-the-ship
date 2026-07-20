@@ -64,4 +64,17 @@ describe('sim', () => {
 		expect(isOverboard(restState(sim2))).toBe(false);
 		expect(restState(sim2)[0].x).toBeCloseTo(rest[0].x, 0);
 	});
+	it('rebuildFromRest restores compound bodies at their exact pose', () => {
+		const sim = createSim();
+		spawnCargo(sim, 'bathtub', 270, 400);
+		runToRest(sim);
+		const rest = restState(sim);
+		const sim2 = createSim();
+		rebuildFromRest(sim2, rest);
+		// exact pose immediately after rebuild, before any settling drift
+		const rebuilt = restState(sim2);
+		expect(rebuilt[0].x).toBeCloseTo(rest[0].x, 5);
+		expect(rebuilt[0].y).toBeCloseTo(rest[0].y, 5);
+		expect(rebuilt[0].angle).toBeCloseTo(rest[0].angle, 5);
+	});
 });

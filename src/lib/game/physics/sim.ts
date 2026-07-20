@@ -102,6 +102,39 @@ export function restState(sim: Sim): RestBody[] {
 export function rebuildFromRest(sim: Sim, rest: RestBody[]): void {
 	for (const r of rest) {
 		const body = spawnCargo(sim, r.cargoId, r.x, r.y);
+		// Compound bodies centre on their parts' centroid, not the def origin —
+		// setPosition/setAngle restore the exact recorded pose regardless.
+		Body.setPosition(body, { x: r.x, y: r.y });
 		Body.setAngle(body, r.angle);
 	}
+}
+
+// World-space outlines for rendering. Compound bodies keep the container at
+// parts[0]; drawing actual part vertices sidesteps centroid-offset math.
+export interface PartShape {
+	kind: 'poly' | 'circle';
+	points?: string;
+	cx?: number;
+	cy?: number;
+	r?: number;
+}
+
+export function bodyShapes(sim: Sim): { cargoId: string; parts: PartShape[] }[] {
+	return sim.cargo.map(({ body, cargoId }) => {
+		const def = getCargo(cargoId);
+		const parts = body.parts.length > 1 ? body.parts.slice(1) : body.parts;
+		return {
+			cargoId,
+			parts: parts.map((p, i) => {
+				const dp = def.parts[i];
+				if (dp.kind === 'circle') {
+					return { kind: 'circle' as const, cx: p.position.x, cy: p.position.y, r: dp.r };
+				}
+				return {
+					kind: 'poly' as const,
+					points: p.vertices.map((v) => `${Math.round(v.x * 10) / 10},${Math.round(v.y * 10) / 10}`).join(' ')
+				};
+			})
+		};
+	});
 }
