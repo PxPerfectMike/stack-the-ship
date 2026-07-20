@@ -34,6 +34,23 @@ describe('sim', () => {
 		runToRest(sim);
 		expect(isOverboard(restState(sim))).toBe(true);
 	});
+	it('a spill concludes shortly after the splash, not at the frame cap', () => {
+		const sim = createSim();
+		const body = spawnCargo(sim, 'crate', 270, 200);
+		applyToss(body, { vx: 18, vy: 0 });
+		const rs = runToRest(sim);
+		expect(rs.done).toBe(true);
+		expect(isOverboard(restState(sim))).toBe(true);
+		expect(rs.frames).toBeLessThan(300);
+	});
+	it('the deck lip catches a slowly rolling tire', () => {
+		const sim = createSim();
+		const body = spawnCargo(sim, 'tire', 270, 200);
+		applyToss(body, { vx: 3, vy: 0 });
+		const rs = runToRest(sim);
+		expect(rs.done).toBe(true);
+		expect(isOverboard(restState(sim))).toBe(false);
+	});
 	it('never exceeds the frame cap even for a bouncy ball', () => {
 		const sim = createSim();
 		spawnCargo(sim, 'beachball', 270, 160);

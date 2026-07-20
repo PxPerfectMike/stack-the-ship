@@ -5,6 +5,7 @@ import { WORLD, type RestBody } from '../rules';
 export const SETTLE_SPEED = 0.15;
 export const SETTLE_ANGULAR = 0.05;
 export const SETTLE_FRAMES = 45;
+export const SPLASH_FRAMES = 45; // once cargo is in the sea the loss is decided — one splash beat, then conclude
 export const MAX_FRAMES = 720; // 12s hard cap — a rocking pig can never hang the game
 export const FRAME_MS = 1000 / 60;
 export const RECORD_EVERY = 3; // ≈20Hz trajectory samples
@@ -22,6 +23,7 @@ export interface TrajectoryFrame {
 export interface RunState {
 	frames: number;
 	calm: number;
+	splash: number;
 	trajectory: TrajectoryFrame[];
 	done: boolean;
 }
@@ -35,7 +37,22 @@ export function createSim(): Sim {
 		40,
 		{ isStatic: true, label: 'deck' }
 	);
-	Composite.add(engine.world, deck);
+	// Small mercy lips at both rails: catch slow rolls, not real tosses.
+	const lipL = Bodies.rectangle(
+		WORLD.deckLeft + WORLD.lipW / 2,
+		WORLD.deckY - WORLD.lipH / 2,
+		WORLD.lipW,
+		WORLD.lipH,
+		{ isStatic: true, label: 'lip' }
+	);
+	const lipR = Bodies.rectangle(
+		WORLD.deckRight - WORLD.lipW / 2,
+		WORLD.deckY - WORLD.lipH / 2,
+		WORLD.lipW,
+		WORLD.lipH,
+		{ isStatic: true, label: 'lip' }
+	);
+	Composite.add(engine.world, [deck, lipL, lipR]);
 	return { engine, cargo: [] };
 }
 
@@ -68,7 +85,7 @@ function isSettledFrame(sim: Sim): boolean {
 }
 
 export function newRunState(): RunState {
-	return { frames: 0, calm: 0, trajectory: [], done: false };
+	return { frames: 0, calm: 0, splash: 0, trajectory: [], done: false };
 }
 
 export function advance(sim: Sim, rs: RunState, steps = 1): void {
@@ -86,7 +103,11 @@ export function advance(sim: Sim, rs: RunState, steps = 1): void {
 		}
 		rs.frames++;
 		rs.calm = isSettledFrame(sim) ? rs.calm + 1 : 0;
-		if (rs.calm >= SETTLE_FRAMES || rs.frames >= MAX_FRAMES) rs.done = true;
+		const drowning = sim.cargo.some(({ body }) => body.position.y > WORLD.waterlineY);
+		rs.splash = drowning ? rs.splash + 1 : 0;
+		if (rs.calm >= SETTLE_FRAMES || rs.splash >= SPLASH_FRAMES || rs.frames >= MAX_FRAMES) {
+			rs.done = true;
+		}
 	}
 }
 

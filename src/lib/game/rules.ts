@@ -4,7 +4,9 @@ export const WORLD = {
 	waterlineY: 880,
 	deckY: 760,
 	deckLeft: 40,
-	deckRight: 500
+	deckRight: 500,
+	lipW: 10,
+	lipH: 18
 } as const;
 
 export interface RestBody {

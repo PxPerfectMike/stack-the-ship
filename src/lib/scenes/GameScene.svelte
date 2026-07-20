@@ -124,6 +124,8 @@
 		height={WORLD.waterlineY - WORLD.deckY}
 		fill="#8a5a3b"
 	/>
+	<rect x={WORLD.deckLeft} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="#8a5a3b" />
+	<rect x={WORLD.deckRight - WORLD.lipW} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="#8a5a3b" />
 
 	{#each view as b, i (i)}
 		<g>
