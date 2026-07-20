@@ -16,6 +16,9 @@
 	--cloud: #ffffff;
 	--lamp: #ffd977;
 	--overlay-card: #fff8ec;
+	--dock: #7a6a58;
+	--dock-dark: #5e5044;
+	--celestial: #ffe08a;
 }
 
 .tod-dusk {
@@ -33,6 +36,9 @@
 	--cloud: #fbe6c9;
 	--lamp: #ffd977;
 	--overlay-card: #fdf1de;
+	--dock: #6d5b48;
+	--dock-dark: #52443a;
+	--celestial: #f9844a;
 }
 
 .tod-night {
@@ -50,4 +56,7 @@
 	--cloud: #22475f;
 	--lamp: #ffd977;
 	--overlay-card: #16405c;
+	--dock: #3a3630;
+	--dock-dark: #2c2620;
+	--celestial: #f4f1e8;
 }

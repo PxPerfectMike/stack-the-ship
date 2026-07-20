@@ -3,8 +3,8 @@ export interface Ambience {
 	wx: 'clear' | 'rain';
 }
 
-const TODS = ['day', 'dusk', 'night'] as const;
-const WXS = ['clear', 'rain'] as const;
+export const TODS = ['day', 'dusk', 'night'] as const;
+export const WXS = ['clear', 'rain'] as const;
 
 // day 45% / dusk 30% / night 25%; rain 25%
 export function rollAmbience(rng: () => number): Ambience {

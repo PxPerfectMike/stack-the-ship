@@ -1,6 +1,16 @@
+<script module lang="ts">
+	import { rollAmbience, type Ambience } from '$lib/game/ambience';
+
+	// Shared-session ambience (guide 02): first mount rolls, later mounts
+	// inherit, next app launch re-rolls.
+	let sessionAmbience: Ambience | undefined;
+</script>
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { hashString, mulberry32 } from '$engine/rng';
+	import Backdrop from '$lib/components/game/Backdrop.svelte';
+	import { TODS, WXS } from '$lib/game/ambience';
 	import { CRANE_POINT, arcPreview, dragToVelocity, type TossInput } from '$lib/game/aim';
 	import { planBotToss } from '$lib/game/bot';
 	import { getCargo } from '$lib/game/cargo';
@@ -23,6 +33,17 @@
 	import { emit } from '$lib/game/events';
 	import { isOverboard } from '$lib/game/rules';
 	import { beginSimulating, resolveToss, session, startMatch } from '$lib/game/store';
+
+	sessionAmbience ??= rollAmbience(mulberry32((Math.random() * 4294967296) >>> 0));
+	const ambParams = new URLSearchParams(location.search);
+	const amb: Ambience = {
+		tod: (TODS as readonly string[]).includes(ambParams.get('tod') ?? '')
+			? (ambParams.get('tod') as Ambience['tod'])
+			: sessionAmbience.tod,
+		wx: (WXS as readonly string[]).includes(ambParams.get('wx') ?? '')
+			? (ambParams.get('wx') as Ambience['wx'])
+			: sessionAmbience.wx
+	};
 
 	let sim: Sim = createSim();
 	let view = $state<CargoPose[]>([]);
@@ -130,6 +151,7 @@
 
 <svg
 	bind:this={svgEl}
+	class="tod-{amb.tod} wx-{amb.wx}"
 	viewBox="0 0 {WORLD.width} {WORLD.height}"
 	role="application"
 	aria-label="Stack the Ship game"
@@ -137,18 +159,18 @@
 	onpointermove={onMove}
 	onpointerup={onUp}
 >
-	<!-- placeholder backdrop: sky, sea, deck. Real diorama arrives in Plan 2. -->
-	<rect width={WORLD.width} height={WORLD.height} fill="#bfe3f2" />
-	<rect y={WORLD.waterlineY} width={WORLD.width} height={WORLD.height - WORLD.waterlineY} fill="#2e6f8e" />
+	<Backdrop {amb} />
+
+	<!-- placeholder hull: replaced by the Ship component in Task 5 -->
 	<rect
 		x={WORLD.deckLeft}
 		y={WORLD.deckY}
 		width={WORLD.deckRight - WORLD.deckLeft}
 		height={WORLD.waterlineY - WORLD.deckY}
-		fill="#8a5a3b"
+		fill="var(--hull)"
 	/>
-	<rect x={WORLD.deckLeft} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="#8a5a3b" />
-	<rect x={WORLD.deckRight - WORLD.lipW} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="#8a5a3b" />
+	<rect x={WORLD.deckLeft} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="var(--hull-dark)" />
+	<rect x={WORLD.deckRight - WORLD.lipW} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="var(--hull-dark)" />
 
 	{#each view as b, i (i)}
 		<g transform="translate({b.x} {b.y}) rotate({b.angleDeg}) translate({b.ox} {b.oy})">
@@ -180,8 +202,17 @@
 	{/if}
 
 	{#each preview as pt, i (i)}
-		<circle cx={pt.x} cy={pt.y} r="4" fill="#1a3a4a" opacity="0.55" />
+		<circle cx={pt.x} cy={pt.y} r="4" fill="var(--ink)" opacity="0.55" />
 	{/each}
+
+	<!-- foreground dock the viewer stands on -->
+	<g pointer-events="none">
+		{#each [90, 270, 450] as x (x)}
+			<rect x={x - 8} y="906" width="16" height="22" rx="4" fill="var(--dock-dark)" />
+		{/each}
+		<rect y="920" width={WORLD.width} height="40" fill="var(--dock)" />
+		<rect y="920" width={WORLD.width} height="6" fill="var(--dock-dark)" />
+	</g>
 
 	{#if $session.phase === 'over'}
 		<rect width={WORLD.width} height={WORLD.height} fill="#00000088" />
@@ -213,7 +244,7 @@
 	}
 	.label {
 		font: 20px system-ui, sans-serif;
-		fill: #123;
+		fill: var(--ink);
 	}
 	.big {
 		font: 28px system-ui, sans-serif;
