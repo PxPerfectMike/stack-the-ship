@@ -153,7 +153,7 @@
 	{/if}
 
 	{#each preview as pt, i (i)}
-		<circle cx={pt.x} cy={pt.y} r="3" fill="#ffffff" opacity="0.6" />
+		<circle cx={pt.x} cy={pt.y} r="4" fill="#1a3a4a" opacity="0.55" />
 	{/each}
 
 	{#if $session.phase === 'over'}
