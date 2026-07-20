@@ -5,15 +5,18 @@
 	import { planBotToss } from '$lib/game/bot';
 	import { getCargo } from '$lib/game/cargo';
 	import { WORLD } from '$lib/game/rules';
+	import CargoArt from '$lib/components/game/CargoArt.svelte';
 	import {
 		advance,
 		applyToss,
+		bodyPoses,
 		bodyShapes,
 		createSim,
 		newRunState,
 		onCollision,
 		restState,
 		spawnCargo,
+		type CargoPose,
 		type PartShape,
 		type Sim
 	} from '$lib/game/physics/sim';
@@ -22,7 +25,9 @@
 	import { beginSimulating, resolveToss, session, startMatch } from '$lib/game/store';
 
 	let sim: Sim = createSim();
-	let view = $state<{ cargoId: string; parts: PartShape[] }[]>([]);
+	let view = $state<CargoPose[]>([]);
+	let debugView = $state<{ cargoId: string; parts: PartShape[] }[]>([]);
+	let debug = $state(false);
 	let drag = $state<{ dx: number; dy: number } | null>(null);
 	let raf = 0;
 	let fast = 1;
@@ -33,7 +38,8 @@
 	const hanging = $derived($session.phase === 'aiming' ? getCargo($session.currentCargo) : null);
 
 	function syncView(): void {
-		view = bodyShapes(sim);
+		view = bodyPoses(sim);
+		if (debug) debugView = bodyShapes(sim);
 	}
 
 	let tossImpacted = false;
@@ -42,6 +48,7 @@
 		const params = new URLSearchParams(location.search);
 		const seed = params.get('seed') ?? `solo-${Date.now()}`;
 		fast = params.get('fast') ? 4 : 1;
+		debug = params.get('debug') === '1';
 		const difficulty = Number(params.get('difficulty') ?? 1) as 1 | 2 | 3;
 		sim = createSim();
 		onCollision(sim, () => {
@@ -144,26 +151,28 @@
 	<rect x={WORLD.deckRight - WORLD.lipW} y={WORLD.deckY - WORLD.lipH} width={WORLD.lipW} height={WORLD.lipH} fill="#8a5a3b" />
 
 	{#each view as b, i (i)}
-		<g>
-			{#each b.parts as p, j (j)}
-				{#if p.kind === 'poly'}
-					<polygon points={p.points} fill="#d9a066" stroke="#7a4a22" />
-				{:else}
-					<circle cx={p.cx} cy={p.cy} r={p.r} fill="#d9a066" stroke="#7a4a22" />
-				{/if}
-			{/each}
+		<g transform="translate({b.x} {b.y}) rotate({b.angleDeg}) translate({b.ox} {b.oy})">
+			<CargoArt id={b.cargoId} />
 		</g>
 	{/each}
 
+	{#if debug}
+		{#each debugView as b, i (i)}
+			<g opacity="0.35">
+				{#each b.parts as p, j (j)}
+					{#if p.kind === 'poly'}
+						<polygon points={p.points} fill="none" stroke="#ff2fa0" stroke-width="2" />
+					{:else}
+						<circle cx={p.cx} cy={p.cy} r={p.r} fill="none" stroke="#ff2fa0" stroke-width="2" />
+					{/if}
+				{/each}
+			</g>
+		{/each}
+	{/if}
+
 	{#if hanging}
-		<g transform="translate({CRANE_POINT.x} {CRANE_POINT.y})" opacity="0.9">
-			{#each hanging.parts as p, j (j)}
-				{#if p.kind === 'rect'}
-					<rect x={p.x - p.w / 2} y={p.y - p.h / 2} width={p.w} height={p.h} fill="#e8c17a" stroke="#7a4a22" />
-				{:else}
-					<circle cx={p.x} cy={p.y} r={p.r} fill="#e8c17a" stroke="#7a4a22" />
-				{/if}
-			{/each}
+		<g transform="translate({CRANE_POINT.x} {CRANE_POINT.y})" opacity="0.95">
+			<CargoArt id={hanging.id} />
 		</g>
 		<text x={WORLD.width / 2} y="60" text-anchor="middle" class="label">
 			{hanging.name} — {$session.active === 0 ? 'your toss' : 'Dockmaster is aiming…'}

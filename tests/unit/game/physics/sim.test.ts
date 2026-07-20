@@ -4,6 +4,7 @@ import {
 	MAX_FRAMES,
 	advance,
 	applyToss,
+	bodyPoses,
 	createSim,
 	newRunState,
 	onCollision,
@@ -81,6 +82,18 @@ describe('sim', () => {
 		expect(rs2.done).toBe(true);
 		expect(isOverboard(restState(sim2))).toBe(false);
 		expect(restState(sim2)[0].x).toBeCloseTo(rest[0].x, 0);
+	});
+	it('bodyPoses reports origin offsets that recover the spawn point at angle 0', () => {
+		const sim = createSim();
+		spawnCargo(sim, 'bathtub', 300, 400);
+		const p = bodyPoses(sim)[0];
+		expect(p.x + p.ox).toBeCloseTo(300, 5);
+		expect(p.y + p.oy).toBeCloseTo(400, 5);
+		const sim2 = createSim();
+		spawnCargo(sim2, 'crate', 300, 400);
+		const pc = bodyPoses(sim2)[0];
+		expect(pc.ox).toBeCloseTo(0, 5);
+		expect(pc.oy).toBeCloseTo(0, 5);
 	});
 	it('onCollision fires when a dropped crate hits the deck', () => {
 		const sim = createSim();

@@ -1,23 +1,26 @@
 <script lang="ts">
-	// Dev-only QA route: renders every cargo item at true scale (guide 01).
+	// Dev-only QA route: renders every cargo item's art at true scale over its
+	// physics silhouette ghost (guide 01/04).
+	import CargoArt from '$lib/components/game/CargoArt.svelte';
 	import { CARGO } from '$lib/game/cargo';
 </script>
 
-<div class="grid">
+<div class="grid tod-day">
 	{#each CARGO as def (def.id)}
 		<figure>
 			<svg
-				viewBox="{-def.w / 2 - 10} {-def.h / 2 - 10} {def.w + 20} {def.h + 20}"
-				width={def.w + 20}
-				height={def.h + 20}
+				viewBox="{-def.w / 2 - 14} {-def.h / 2 - 14} {def.w + 28} {def.h + 28}"
+				width={def.w + 28}
+				height={def.h + 28}
 			>
 				{#each def.parts as p, j (j)}
 					{#if p.kind === 'rect'}
-						<rect x={p.x - p.w / 2} y={p.y - p.h / 2} width={p.w} height={p.h} fill="#d9a066" stroke="#7a4a22" />
+						<rect x={p.x - p.w / 2} y={p.y - p.h / 2} width={p.w} height={p.h} fill="#dfe9ef" />
 					{:else}
-						<circle cx={p.x} cy={p.y} r={p.r} fill="#d9a066" stroke="#7a4a22" />
+						<circle cx={p.x} cy={p.y} r={p.r} fill="#dfe9ef" />
 					{/if}
 				{/each}
+				<CargoArt id={def.id} />
 			</svg>
 			<figcaption>{def.name} <small>d={def.density} r={def.restitution}</small></figcaption>
 		</figure>
@@ -31,6 +34,8 @@
 		gap: 24px;
 		padding: 24px;
 		align-items: flex-end;
+		background: #f3f7f9;
+		min-height: 100vh;
 	}
 	figcaption {
 		font: 13px system-ui, sans-serif;

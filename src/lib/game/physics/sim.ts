@@ -12,7 +12,7 @@ export const RECORD_EVERY = 3; // ≈20Hz trajectory samples
 
 export interface Sim {
 	engine: Engine;
-	cargo: { body: Body; cargoId: string }[];
+	cargo: { body: Body; cargoId: string; ox: number; oy: number }[];
 }
 
 export interface TrajectoryFrame {
@@ -66,8 +66,30 @@ export function spawnCargo(sim: Sim, cargoId: string, x: number, y: number): Bod
 	);
 	const body = parts.length === 1 ? parts[0] : Body.create({ parts, ...opts });
 	Composite.add(sim.engine.world, body);
-	sim.cargo.push({ body, cargoId });
+	// Compound bodies centre on their parts' centroid; remember where the def
+	// origin sits relative to it so authored art can ride the body exactly.
+	sim.cargo.push({ body, cargoId, ox: x - body.position.x, oy: y - body.position.y });
 	return body;
+}
+
+export interface CargoPose {
+	cargoId: string;
+	x: number;
+	y: number;
+	angleDeg: number;
+	ox: number;
+	oy: number;
+}
+
+export function bodyPoses(sim: Sim): CargoPose[] {
+	return sim.cargo.map(({ body, cargoId, ox, oy }) => ({
+		cargoId,
+		x: body.position.x,
+		y: body.position.y,
+		angleDeg: (body.angle * 180) / Math.PI,
+		ox,
+		oy
+	}));
 }
 
 export function applyToss(body: Body, input: { vx: number; vy: number }): void {
