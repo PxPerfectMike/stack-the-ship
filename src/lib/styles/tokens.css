@@ -1,0 +1,53 @@
+/* Palette tokens, switched by namespaced time-of-day state classes (guide 03).
+   Flat fills only; the sky gradient is the single permitted gradient (spec §1). */
+
+.tod-day {
+	--sky-top: #8ed3ee;
+	--sky-bottom: #d9f1fa;
+	--water: #2e7da6;
+	--water-deep: #23648a;
+	--silhouette: #a5cfdf;
+	--hull: #e8574b;
+	--hull-dark: #c74538;
+	--ship-deck: #e0a95a;
+	--crane: #f2c14e;
+	--rope: #7a6a58;
+	--ink: #17323f;
+	--cloud: #ffffff;
+	--lamp: #ffd977;
+	--overlay-card: #fff8ec;
+}
+
+.tod-dusk {
+	--sky-top: #f7b267;
+	--sky-bottom: #f9d9a6;
+	--water: #3d5a80;
+	--water-deep: #32496b;
+	--silhouette: #c77e5e;
+	--hull: #d64f44;
+	--hull-dark: #b03d33;
+	--ship-deck: #cf9950;
+	--crane: #e0ae3f;
+	--rope: #6d5d4c;
+	--ink: #2b2436;
+	--cloud: #fbe6c9;
+	--lamp: #ffd977;
+	--overlay-card: #fdf1de;
+}
+
+.tod-night {
+	--sky-top: #0d2236;
+	--sky-bottom: #16405c;
+	--water: #123a52;
+	--water-deep: #0d2c40;
+	--silhouette: #0a2a3d;
+	--hull: #a63f38;
+	--hull-dark: #7e2f2a;
+	--ship-deck: #9c7440;
+	--crane: #a8842f;
+	--rope: #4a4038;
+	--ink: #dfe9ef;
+	--cloud: #22475f;
+	--lamp: #ffd977;
+	--overlay-card: #16405c;
+}
