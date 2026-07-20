@@ -21,6 +21,9 @@ export const SHIMMER_MS = 5200;
 export const LAMP_BLINK_MS = 3400;
 export const RAIN_NEAR_MS = 700;
 export const RAIN_FAR_MS = 1100;
+export const WAVE_NEAR_MS = 8000;
+export const WAVE_FAR_MS = 13000;
+export const STAR_TWINKLE_MS = 2800;
 
 export const EASE_ARRIVE = 'cubic-bezier(0.16, 1, 0.3, 1)';
 export const EASE_DEPART = 'cubic-bezier(0.7, 0, 0.84, 0)';

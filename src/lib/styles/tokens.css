@@ -2,6 +2,9 @@
    Flat fills only; the sky gradient is the single permitted gradient (spec §1). */
 
 .tod-day {
+	--water-light: #5fa7c9;
+	--silhouette-far: #c3dde8;
+	--foam: #ffffff;
 	--sky-top: #8ed3ee;
 	--sky-bottom: #d9f1fa;
 	--water: #2e7da6;
@@ -22,6 +25,9 @@
 }
 
 .tod-dusk {
+	--water-light: #557299;
+	--silhouette-far: #dfa77f;
+	--foam: #f7e4c8;
 	--sky-top: #f7b267;
 	--sky-bottom: #f9d9a6;
 	--water: #3d5a80;
@@ -42,6 +48,9 @@
 }
 
 .tod-night {
+	--water-light: #1b4a66;
+	--silhouette-far: #123448;
+	--foam: #9fc4d8;
 	--sky-top: #0d2236;
 	--sky-bottom: #16405c;
 	--water: #123a52;
