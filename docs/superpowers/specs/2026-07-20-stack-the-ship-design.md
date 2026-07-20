@@ -49,8 +49,11 @@ Match flow:
 1. Players alternate turns. Each turn deals one cargo item —
    deterministically seeded from `matchId + turnNumber`, so both players
    face the same fate order and replays are exact.
-2. The crane swings in dangling the item. Player aims with one thumb:
-   drag back → faint arc hint → release to toss.
+2. The crane trolley oscillates along its rail with the item dangling
+   beneath (pendulum). One tap releases: the item drops carrying the
+   trolley's lateral momentum — release timing IS the aim. (Changed from
+   drag-slingshot after playtesting: placement is the real skill, and the
+   swing guarantees matches can't stall on perfect play.)
 3. Physics settles (velocity-epsilon rest detection + hard timeout so a
    rocking item can never hang the game).
 4. **Sudden death:** if any body rests below the waterline after settle,

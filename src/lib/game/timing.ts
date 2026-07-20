@@ -7,6 +7,7 @@ export const DEPART_BEAT_MS = 1100; // stillness between loss and the horn
 export const CRANE_SWAY_MS = 2600;
 export const CRANE_DROP_ANTICIPATION_MS = 140;
 export const BOT_THINK_MS = 700;
+export const SWING_PERIOD_MS = 2200;
 export const BIRD_STARTLE_MIN_MS = 80;
 export const BIRD_STARTLE_MAX_MS = 120;
 export const BIRD_SCATTER_MS = 700;

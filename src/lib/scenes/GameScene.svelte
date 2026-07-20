@@ -11,8 +11,9 @@
 	import { hashString, mulberry32 } from '$engine/rng';
 	import Backdrop from '$lib/components/game/Backdrop.svelte';
 	import { TODS, WXS } from '$lib/game/ambience';
-	import { CRANE_POINT, arcPreview, dragToVelocity, type TossInput } from '$lib/game/aim';
-	import { planBotToss } from '$lib/game/bot';
+	import { HOOK_Y, predictedLandingX, releaseInput, trolleyX } from '$lib/game/swing';
+	import { BOT_THINK_MS } from '$lib/game/timing';
+	import { RELEASE_TOLERANCE, planBotTargetX } from '$lib/game/bot';
 	import { getCargo } from '$lib/game/cargo';
 	import { WORLD } from '$lib/game/rules';
 	import CargoArt from '$lib/components/game/CargoArt.svelte';
@@ -49,14 +50,16 @@
 	let view = $state<CargoPose[]>([]);
 	let debugView = $state<{ cargoId: string; parts: PartShape[] }[]>([]);
 	let debug = $state(false);
-	let drag = $state<{ dx: number; dy: number } | null>(null);
+	let trolleyPos = $state(270);
 	let raf = 0;
+	let trolleyRaf = 0;
 	let fast = 1;
 	let botRng = mulberry32(1);
 	let svgEl: SVGSVGElement;
+	const t0 = performance.now();
 
-	const preview = $derived(drag ? arcPreview(dragToVelocity(drag.dx, drag.dy)) : []);
 	const hanging = $derived($session.phase === 'aiming' ? getCargo($session.currentCargo) : null);
+	const hangOffset = $derived(hanging ? hanging.h / 2 + 10 : 0);
 
 	function syncView(): void {
 		view = bodyPoses(sim);
@@ -84,8 +87,11 @@
 		emit('match-reset');
 	}
 
-	function doToss(input: TossInput): void {
-		const body = spawnCargo(sim, $session.currentCargo, CRANE_POINT.x, CRANE_POINT.y);
+	function releaseNow(): void {
+		if ($session.phase !== 'aiming') return;
+		const { x, input } = releaseInput(performance.now() - t0);
+		const def = getCargo($session.currentCargo);
+		const body = spawnCargo(sim, $session.currentCargo, x, HOOK_Y + def.h / 2 + 10);
 		applyToss(body, input);
 		beginSimulating();
 		tossImpacted = false;
@@ -105,47 +111,49 @@
 		raf = requestAnimationFrame(loop);
 	}
 
-	function svgPoint(e: PointerEvent): { x: number; y: number } {
-		const r = svgEl.getBoundingClientRect();
-		return {
-			x: ((e.clientX - r.left) / r.width) * WORLD.width,
-			y: ((e.clientY - r.top) / r.height) * WORLD.height
-		};
-	}
-
-	let dragStart: { x: number; y: number } | null = null;
-
-	function onDown(e: PointerEvent): void {
+	function onDown(): void {
 		if ($session.phase !== 'aiming' || $session.active !== 0) return;
-		dragStart = svgPoint(e);
-		drag = { dx: 0, dy: 0 };
-		svgEl.setPointerCapture(e.pointerId);
-	}
-	function onMove(e: PointerEvent): void {
-		if (!dragStart) return;
-		const p = svgPoint(e);
-		drag = { dx: p.x - dragStart.x, dy: p.y - dragStart.y };
-	}
-	function onUp(): void {
-		if (!dragStart || !drag) return;
-		const input = dragToVelocity(drag.dx, drag.dy);
-		dragStart = null;
-		drag = null;
-		doToss(input);
+		releaseNow();
 	}
 
 	$effect(() => {
 		if ($session.phase === 'aiming' && $session.active === 1) {
-			const t = setTimeout(() => {
-				doToss(planBotToss($session.rest, $session.difficulty, botRng));
-			}, 700 / fast);
-			return () => clearTimeout(t);
+			let watchRaf = 0;
+			const target = { x: 0, armed: false };
+			const think = setTimeout(() => {
+				target.x = planBotTargetX($session.rest, $session.difficulty, botRng);
+				target.armed = true;
+			}, BOT_THINK_MS / fast);
+			const watch = (): void => {
+				if (
+					target.armed &&
+					Math.abs(predictedLandingX(performance.now() - t0) - target.x) <
+						RELEASE_TOLERANCE[$session.difficulty]
+				) {
+					releaseNow();
+					return;
+				}
+				watchRaf = requestAnimationFrame(watch);
+			};
+			watchRaf = requestAnimationFrame(watch);
+			return () => {
+				clearTimeout(think);
+				cancelAnimationFrame(watchRaf);
+			};
 		}
 	});
 
 	onMount(() => {
+		const trolleyLoop = (): void => {
+			if ($session.phase === 'aiming') trolleyPos = trolleyX(performance.now() - t0);
+			trolleyRaf = requestAnimationFrame(trolleyLoop);
+		};
+		trolleyRaf = requestAnimationFrame(trolleyLoop);
 		newMatch();
-		return () => cancelAnimationFrame(raf);
+		return () => {
+			cancelAnimationFrame(raf);
+			cancelAnimationFrame(trolleyRaf);
+		};
 	});
 </script>
 
@@ -156,8 +164,6 @@
 	role="application"
 	aria-label="Stack the Ship game"
 	onpointerdown={onDown}
-	onpointermove={onMove}
-	onpointerup={onUp}
 >
 	<Backdrop {amb} />
 
@@ -193,17 +199,19 @@
 	{/if}
 
 	{#if hanging}
-		<g transform="translate({CRANE_POINT.x} {CRANE_POINT.y})" opacity="0.95">
+		<!-- placeholder crane rail + trolley: the real crane arrives in Task 6 -->
+		<g pointer-events="none">
+			<rect x={WORLD.deckLeft - 20} y="96" width={WORLD.deckRight - WORLD.deckLeft + 40} height="10" rx="5" fill="var(--crane)" />
+			<rect x={trolleyPos - 14} y="93" width="28" height="16" rx="5" fill="var(--rope)" />
+			<line x1={trolleyPos} y1="109" x2={trolleyPos} y2={HOOK_Y + 6} stroke="var(--rope)" stroke-width="3" />
+		</g>
+		<g transform="translate({trolleyPos} {HOOK_Y + hangOffset})" opacity="0.95">
 			<CargoArt id={hanging.id} />
 		</g>
 		<text x={WORLD.width / 2} y="60" text-anchor="middle" class="label">
-			{hanging.name} — {$session.active === 0 ? 'your toss' : 'Dockmaster is aiming…'}
+			{hanging.name} — {$session.active === 0 ? 'tap to drop!' : 'the Dockmaster is aiming…'}
 		</text>
 	{/if}
-
-	{#each preview as pt, i (i)}
-		<circle cx={pt.x} cy={pt.y} r="4" fill="var(--ink)" opacity="0.55" />
-	{/each}
 
 	<!-- foreground dock the viewer stands on -->
 	<g pointer-events="none">
