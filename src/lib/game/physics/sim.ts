@@ -1,4 +1,4 @@
-import { Bodies, Body, Composite, Engine } from 'matter-js';
+import { Bodies, Body, Composite, Engine, Events } from 'matter-js';
 import { getCargo } from '../cargo';
 import { WORLD, type RestBody } from '../rules';
 
@@ -72,6 +72,10 @@ export function spawnCargo(sim: Sim, cargoId: string, x: number, y: number): Bod
 
 export function applyToss(body: Body, input: { vx: number; vy: number }): void {
 	Body.setVelocity(body, { x: input.vx, y: input.vy });
+}
+
+export function onCollision(sim: Sim, cb: () => void): void {
+	Events.on(sim.engine, 'collisionStart', () => cb());
 }
 
 export function step(sim: Sim): void {

@@ -6,6 +6,7 @@ import {
 	applyToss,
 	createSim,
 	newRunState,
+	onCollision,
 	rebuildFromRest,
 	restState,
 	spawnCargo
@@ -80,6 +81,14 @@ describe('sim', () => {
 		expect(rs2.done).toBe(true);
 		expect(isOverboard(restState(sim2))).toBe(false);
 		expect(restState(sim2)[0].x).toBeCloseTo(rest[0].x, 0);
+	});
+	it('onCollision fires when a dropped crate hits the deck', () => {
+		const sim = createSim();
+		let hits = 0;
+		onCollision(sim, () => hits++);
+		spawnCargo(sim, 'crate', 270, 200);
+		runToRest(sim);
+		expect(hits).toBeGreaterThan(0);
 	});
 	it('rebuildFromRest restores compound bodies at their exact pose', () => {
 		const sim = createSim();

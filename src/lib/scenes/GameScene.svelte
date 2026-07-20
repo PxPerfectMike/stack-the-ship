@@ -11,11 +11,14 @@
 		bodyShapes,
 		createSim,
 		newRunState,
+		onCollision,
 		restState,
 		spawnCargo,
 		type PartShape,
 		type Sim
 	} from '$lib/game/physics/sim';
+	import { emit } from '$lib/game/events';
+	import { isOverboard } from '$lib/game/rules';
 	import { beginSimulating, resolveToss, session, startMatch } from '$lib/game/store';
 
 	let sim: Sim = createSim();
@@ -33,27 +36,40 @@
 		view = bodyShapes(sim);
 	}
 
+	let tossImpacted = false;
+
 	function newMatch(): void {
 		const params = new URLSearchParams(location.search);
 		const seed = params.get('seed') ?? `solo-${Date.now()}`;
 		fast = params.get('fast') ? 4 : 1;
 		const difficulty = Number(params.get('difficulty') ?? 1) as 1 | 2 | 3;
 		sim = createSim();
+		onCollision(sim, () => {
+			if (!tossImpacted) {
+				tossImpacted = true;
+				emit('impact');
+			}
+		});
 		botRng = mulberry32(hashString(`${seed}:bot`));
 		startMatch({ seed, difficulty, gentle: params.get('gentle') === '1' });
 		syncView();
+		emit('match-reset');
 	}
 
 	function doToss(input: TossInput): void {
 		const body = spawnCargo(sim, $session.currentCargo, CRANE_POINT.x, CRANE_POINT.y);
 		applyToss(body, input);
 		beginSimulating();
+		tossImpacted = false;
+		emit('toss-launched');
 		const rs = newRunState();
 		const loop = (): void => {
 			advance(sim, rs, fast);
 			syncView();
 			if (rs.done) {
-				resolveToss(restState(sim));
+				const rest = restState(sim);
+				emit(isOverboard(rest) ? 'spill' : 'settled');
+				resolveToss(rest);
 			} else {
 				raf = requestAnimationFrame(loop);
 			}
