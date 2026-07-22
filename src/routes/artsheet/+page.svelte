@@ -75,9 +75,9 @@
 	<h2>Scene pieces</h2>
 	<div class="pieces">
 		<figure class="piece">
-			<svg viewBox="-60 640 700 280" width="680">
+			<svg viewBox="16 630 542 290" width="600">
 				<Ship name="MV Barely Adequate" />
-				<rect x="-60" y="886" width="700" height="34" fill="var(--water-deep)" />
+				<rect x="16" y="886" width="542" height="34" fill="var(--water-deep)" />
 			</svg>
 			<figcaption><b>The ship</b> <code>Ship.svelte</code></figcaption>
 		</figure>
