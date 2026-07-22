@@ -150,8 +150,8 @@
 		{#each [-35, -17, 1, 13] as lx (lx)}
 			<rect x={lx} y="15" width="9" height="11" rx="4" fill="#f4b3be" />
 		{/each}
-		<path d="M 19 -19 Q 20 -27 25 -29 Q 28 -25 26 -18 Z" fill="#e894a6" />
-		<path d="M 31 -18 Q 33 -27 38 -28 Q 40 -23 37 -16 Z" fill="#e894a6" />
+		<path d="M 16 -17 Q 15 -28 20 -33 Q 25 -34 26 -28 Q 26 -22 23 -17 Z" fill="#e894a6" />
+		<path d="M 30 -16 Q 30 -27 35 -31 Q 40 -32 40 -26 Q 39 -20 36 -15 Z" fill="#e894a6" />
 		<ellipse cx="26" cy="-12" rx="1.9" ry="2.7" fill="#2b2024" />
 		<ellipse cx="38" cy="-12" rx="1.9" ry="2.7" fill="#2b2024" />
 		<rect x="29" y="-7" width="12" height="9" rx="4" fill="#e894a6" />
