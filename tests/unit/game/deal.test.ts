@@ -26,4 +26,26 @@ describe('dealCargo', () => {
 			expect(ALL_IDS).toContain(dealCargo('m4', t));
 		}
 	});
+	it('never deals turn-gated chaos items in the opening turns', () => {
+		const gated = ['tire', 'beachball', 'bball'];
+		for (let seed = 0; seed < 60; seed++) {
+			for (const t of [0, 1]) {
+				expect(gated).not.toContain(dealCargo(`open-${seed}`, t));
+			}
+		}
+	});
+	it('rare items show up well below their uniform share', () => {
+		const rare = new Set(['tire', 'beachball', 'bball']);
+		let hits = 0;
+		let total = 0;
+		for (let seed = 0; seed < 40; seed++) {
+			for (let t = 2; t < 30; t++) {
+				total++;
+				if (rare.has(dealCargo(`freq-${seed}`, t))) hits++;
+			}
+		}
+		// uniform share would be 3/22 ≈ 13.6%; weighted should be well under
+		expect(hits / total).toBeGreaterThan(0.005); // still possible
+		expect(hits / total).toBeLessThan(0.08);
+	});
 });
