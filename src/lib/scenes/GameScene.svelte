@@ -82,6 +82,7 @@
 	let raf = 0;
 	let trolleyRaf = 0;
 	let fast = 1;
+	let firstMatch = true;
 	let botRng = mulberry32(1);
 	let svgEl: SVGSVGElement;
 	let timers: ReturnType<typeof setTimeout>[] = [];
@@ -127,12 +128,16 @@
 		startMatch({ seed, difficulty, gentle: params.get('gentle') === '1' });
 		syncView();
 		emit('match-reset');
-		if (params.get('phase') === 'docked') {
+		// ?phase=docked is a dev shortcut for the FIRST match only — every
+		// "Next ship" after that plays the full docking choreography.
+		if (firstMatch && params.get('phase') === 'docked') {
+			firstMatch = false;
 			vesselTransition = 'none';
 			vesselTx = 0;
 			dockPhase = 'docked';
 			return;
 		}
+		firstMatch = false;
 		dockPhase = 'arriving';
 		vesselTransition = 'none';
 		vesselTx = -660;
@@ -342,7 +347,15 @@
 			<text x={WORLD.width / 2} y="446" text-anchor="middle" class="card-sub">
 				{$session.loser === 0 ? `The sea has your ${spilledName} now.` : 'The sea provides. You win.'}
 			</text>
-			<g onpointerdown={newMatch} role="button" tabindex="-1" style="cursor: pointer;">
+			<g
+				onpointerdown={(e) => {
+					e.stopPropagation();
+					newMatch();
+				}}
+				role="button"
+				tabindex="-1"
+				style="cursor: pointer;"
+			>
 				<rect x={WORLD.width / 2 - 92} y="472" width="184" height="52" rx="14" fill="var(--crane)" />
 				<text x={WORLD.width / 2} y="506" text-anchor="middle" class="card-btn">Next ship</text>
 			</g>
