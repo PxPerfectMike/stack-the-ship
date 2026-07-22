@@ -110,7 +110,9 @@
 	function newMatch(): void {
 		const params = new URLSearchParams(location.search);
 		const seed = params.get('seed') ?? `solo-${Date.now()}`;
-		fast = params.get('fast') ? 4 : 1;
+		// fast is an honest multiplier: ?fast=2 → 2x, bare ?fast → 4x, ?fast=1 → normal
+		const fastRaw = Number(params.get('fast'));
+		fast = params.has('fast') ? (Number.isFinite(fastRaw) && fastRaw >= 1 ? fastRaw : 4) : 1;
 		debug = params.get('debug') === '1';
 		const difficulty = Number(params.get('difficulty') ?? 1) as 1 | 2 | 3;
 		sim = createSim();
