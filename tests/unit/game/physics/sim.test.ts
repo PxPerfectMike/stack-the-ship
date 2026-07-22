@@ -103,6 +103,22 @@ describe('sim', () => {
 		runToRest(sim);
 		expect(hits).toBeGreaterThan(0);
 	});
+	it('a bouncy duck wedged in the bathtub settles instead of vibrating forever', () => {
+		const sim = createSim();
+		rebuildFromRest(sim, [{ cargoId: 'bathtub', x: 270, y: 735, angle: 0 }]);
+		spawnCargo(sim, 'duck', 270, 640);
+		const rs = runToRest(sim);
+		expect(rs.done).toBe(true);
+		expect(rs.frames).toBeLessThan(MAX_FRAMES);
+		const rest = restState(sim);
+		expect(isOverboard(rest)).toBe(false);
+		// re-running the settled stack must not drift it (no perpetual jitter)
+		const sim2 = createSim();
+		rebuildFromRest(sim2, rest);
+		const rs2 = runToRest(sim2);
+		expect(rs2.frames).toBeLessThan(MAX_FRAMES);
+		expect(restState(sim2)[1].x).toBeCloseTo(rest[1].x, -1);
+	});
 	it('the bow foredeck is solid — a crate resting on it stays put', () => {
 		const sim = createSim();
 		// place directly on the shelf (bottom 1px above it) — wide items that

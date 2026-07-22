@@ -2,8 +2,11 @@ import { Bodies, Body, Composite, Engine, Events } from 'matter-js';
 import { getCargo } from '../cargo';
 import { WORLD, type RestBody } from '../rules';
 
-export const SETTLE_SPEED = 0.15;
-export const SETTLE_ANGULAR = 0.05;
+// Settling is judged by POSITION, not velocity: an item wedged in the tub (or
+// any concave pocket) micro-vibrates forever as the solver argues with itself,
+// but it isn't going anywhere. If nothing drifts more than SETTLE_DRIFT_PX
+// over SETTLE_FRAMES, the toss is over.
+export const SETTLE_DRIFT_PX = 2.5;
 export const SETTLE_FRAMES = 45;
 export const SPLASH_FRAMES = 45; // once cargo is in the sea the loss is decided — one splash beat, then conclude
 export const MAX_FRAMES = 720; // 12s hard cap — a rocking pig can never hang the game
@@ -24,6 +27,7 @@ export interface RunState {
 	frames: number;
 	calm: number;
 	splash: number;
+	anchors: { x: number; y: number }[];
 	trajectory: TrajectoryFrame[];
 	done: boolean;
 }
@@ -126,14 +130,8 @@ export function step(sim: Sim): void {
 	Engine.update(sim.engine, FRAME_MS);
 }
 
-function isSettledFrame(sim: Sim): boolean {
-	return sim.cargo.every(
-		({ body }) => body.speed < SETTLE_SPEED && body.angularSpeed < SETTLE_ANGULAR
-	);
-}
-
 export function newRunState(): RunState {
-	return { frames: 0, calm: 0, splash: 0, trajectory: [], done: false };
+	return { frames: 0, calm: 0, splash: 0, anchors: [], trajectory: [], done: false };
 }
 
 export function advance(sim: Sim, rs: RunState, steps = 1): void {
@@ -150,7 +148,18 @@ export function advance(sim: Sim, rs: RunState, steps = 1): void {
 			});
 		}
 		rs.frames++;
-		rs.calm = isSettledFrame(sim) ? rs.calm + 1 : 0;
+		const drifted =
+			rs.anchors.length !== sim.cargo.length ||
+			sim.cargo.some(({ body }, bi) => {
+				const a = rs.anchors[bi];
+				return Math.hypot(body.position.x - a.x, body.position.y - a.y) > SETTLE_DRIFT_PX;
+			});
+		if (drifted) {
+			rs.anchors = sim.cargo.map(({ body }) => ({ x: body.position.x, y: body.position.y }));
+			rs.calm = 0;
+		} else {
+			rs.calm++;
+		}
 		const drowning = sim.cargo.some(({ body }) => body.position.y > WORLD.waterlineY);
 		rs.splash = drowning ? rs.splash + 1 : 0;
 		if (rs.calm >= SETTLE_FRAMES || rs.splash >= SPLASH_FRAMES || rs.frames >= MAX_FRAMES) {
