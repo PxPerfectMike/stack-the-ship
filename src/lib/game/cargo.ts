@@ -32,12 +32,12 @@ export const CARGO: CargoDef[] = [
 	{ id: 'duck', name: 'Giant Rubber Duck', w: 90, h: 78, density: 0.0004, restitution: 0.6, friction: 0.4, parts: [rect(0, 13, 90, 52), { kind: 'circle', x: 22, y: -24, r: 15 }] },
 	{ id: 'cone', name: 'Traffic Cone', w: 60, h: 70, density: 0.0008, restitution: 0.1, friction: 0.7, parts: [rect(0, 28, 60, 14), rect(0, -7, 22, 56)] },
 	{ id: 'washer', name: 'Washing Machine', w: 70, h: 82, density: 0.0025, restitution: 0.03, friction: 0.6, parts: [rect(0, 0, 70, 82)] },
-	{ id: 'sofa', name: 'Sofa', w: 140, h: 62, density: 0.0009, restitution: 0.12, friction: 0.7, parts: [rect(0, 15, 140, 32), rect(-35, -15, 70, 32)] },
+	{ id: 'sofa', name: 'Sofa', w: 140, h: 62, density: 0.0009, restitution: 0.12, friction: 0.7, parts: [rect(0, 0, 140, 62)] },
 	{ id: 'safe', name: 'Bank Safe', w: 70, h: 74, density: 0.012, restitution: 0.01, friction: 0.9, parts: [rect(0, 0, 70, 74)] },
-	{ id: 'mattress', name: 'Mattress', w: 130, h: 30, density: 0.0005, restitution: 0.35, friction: 0.8, parts: [rect(0, 0, 130, 30)] },
-	{ id: 'cake', name: 'Wedding Cake', w: 90, h: 86, density: 0.0007, restitution: 0.05, friction: 0.5, parts: [rect(0, 28, 90, 30), rect(0, -1, 64, 28), rect(0, -29, 40, 28)] },
+	{ id: 'delorean', name: 'Time Machine', w: 130, h: 36, density: 0.002, restitution: 0.1, friction: 0.5, parts: [rect(0, 0, 130, 36)] },
+	{ id: 'cake', name: 'Wedding Cake', w: 90, h: 86, density: 0.0007, restitution: 0.05, friction: 0.5, parts: [rect(0, 30, 90, 26), rect(0, 4, 64, 26), rect(0, -20, 40, 22), rect(0, -37, 16, 12)] },
 	{ id: 'potty', name: 'Porta-Potty', w: 64, h: 110, density: 0.0008, restitution: 0.1, friction: 0.5, parts: [rect(0, 0, 64, 110)] },
-	{ id: 'disco', name: 'Disco Ball', w: 50, h: 50, density: 0.0018, restitution: 0.4, friction: 0.15, parts: [{ kind: 'circle', x: 0, y: 0, r: 25 }] }
+	{ id: 'bball', name: 'Basketball', w: 50, h: 50, density: 0.0006, restitution: 0.65, friction: 0.6, parts: [{ kind: 'circle', x: 0, y: 0, r: 25 }] }
 ];
 
 export const ALL_IDS: string[] = CARGO.map((c) => c.id);
