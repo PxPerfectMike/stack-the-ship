@@ -2,10 +2,25 @@
 	// Flat DWTD-style cargo art, drawn in def-local coordinates (origin = def
 	// centre, matching src/lib/game/cargo.ts physics silhouettes). Deadpan
 	// objects; a chosen few are alive (pig, moai, duck, gnome) — spec §1.
-	let { id }: { id: string } = $props();
+	// `overlay` renders an item's FRONT layer only (drawn after all cargo so
+	// contents nest behind it) — currently just the bathtub's front wall.
+	let { id, overlay = false }: { id: string; overlay?: boolean } = $props();
 </script>
 
-{#if id === 'crate'}
+{#if overlay}
+	{#if id === 'bathtub'}
+		<g>
+			<path
+				d="M -55 -14 Q -55 -20 -49 -20 L 49 -20 Q 55 -20 55 -14 L 51 12 Q 49 25 36 25 L -36 25 Q -49 25 -51 12 Z"
+				fill="#eef2f4"
+				stroke="#9fb3bd"
+				stroke-width="2.5"
+			/>
+			<rect x="-52" y="-18" width="104" height="5" rx="2.5" fill="#ffffff" />
+			<circle cx="0" cy="-4" r="3" fill="#bfd0d8" />
+		</g>
+	{/if}
+{:else if id === 'crate'}
 	<g>
 		<rect x="-30" y="-30" width="60" height="60" rx="3" fill="#e3a857" />
 		<line x1="-25" y1="-25" x2="25" y2="25" stroke="#f0bc6e" stroke-width="11" />
@@ -103,18 +118,18 @@
 	</g>
 {:else if id === 'bathtub'}
 	<g>
-		<path
-			d="M -55 -19 Q -55 -25 -49 -25 L 49 -25 Q 55 -25 55 -19 L 51 12 Q 49 25 36 25 L -36 25 Q -49 25 -51 12 Z"
-			fill="#eef2f4"
-			stroke="#9fb3bd"
-			stroke-width="2.5"
-		/>
 		<rect x="-48" y="-36" width="4.5" height="15" rx="2" fill="#8fa3ad" />
 		<path d="M -45.8 -34 Q -45.8 -40 -40 -40 Q -34.5 -40 -34.5 -33" fill="none" stroke="#8fa3ad" stroke-width="4.5" stroke-linecap="round" />
 		<circle cx="-51" cy="-28" r="2.6" fill="#7e929e" />
 		<path d="M -34.5 -29 q 1.8 2.6 0 4 q -1.8 -1.4 0 -4 Z" fill="#7ec3d8" />
-		<rect x="-52" y="-23" width="104" height="6" rx="3" fill="#ffffff" />
-		<circle cx="0" cy="-8" r="3" fill="#bfd0d8" />
+		<!-- interior/back — the front wall arrives as a separate overlay pass -->
+		<path
+			d="M -55 -19 Q -55 -25 -49 -25 L 49 -25 Q 55 -25 55 -19 L 51 12 Q 49 25 36 25 L -36 25 Q -49 25 -51 12 Z"
+			fill="#c9d6db"
+			stroke="#9fb3bd"
+			stroke-width="2.5"
+		/>
+		<rect x="-52" y="-23" width="104" height="5" rx="2.5" fill="#e4ebee" />
 	</g>
 {:else if id === 'wardrobe'}
 	<g>

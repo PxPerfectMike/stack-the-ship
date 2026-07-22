@@ -66,6 +66,7 @@
 						{/each}
 					{/if}
 					<CargoArt id={def.id} />
+					<CargoArt id={def.id} overlay />
 				</svg>
 				<figcaption><b>{def.name}</b> <code>{def.id}</code></figcaption>
 			</figure>

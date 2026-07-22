@@ -291,6 +291,16 @@
 			</g>
 		{/each}
 
+		<!-- front-layer pass: tub walls re-draw over their contents so cargo
+		     that lands inside visually nests IN the tub -->
+		{#each view as b, i (i)}
+			{#if b.cargoId === 'bathtub'}
+				<g transform="translate({b.x} {b.y}) rotate({b.angleDeg}) translate({b.ox} {b.oy})">
+					<CargoArt id={b.cargoId} overlay />
+				</g>
+			{/if}
+		{/each}
+
 		{#if debug}
 			{#each debugView as b, i (i)}
 				<g opacity="0.35">
@@ -338,6 +348,7 @@
 				/>
 				<g transform="translate({bob.x} {bob.y})">
 					<CargoArt id={hanging.id} />
+					<CargoArt id={hanging.id} overlay />
 				</g>
 			</g>
 		</g>

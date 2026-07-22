@@ -21,6 +21,7 @@
 					{/if}
 				{/each}
 				<CargoArt id={def.id} />
+				<CargoArt id={def.id} overlay />
 			</svg>
 			<figcaption>{def.name} <small>d={def.density} r={def.restitution}</small></figcaption>
 		</figure>
