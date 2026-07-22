@@ -12,6 +12,8 @@
 	import Backdrop from '$lib/components/game/Backdrop.svelte';
 	import Birds from '$lib/components/game/Birds.svelte';
 	import CargoArt from '$lib/components/game/CargoArt.svelte';
+	import Crane from '$lib/components/game/Crane.svelte';
+	import Dock from '$lib/components/game/Dock.svelte';
 	import Ship from '$lib/components/game/Ship.svelte';
 	import { TODS, WXS } from '$lib/game/ambience';
 	import { RELEASE_TOLERANCE, planBotTargetX } from '$lib/game/bot';
@@ -299,15 +301,7 @@
 	{/if}
 
 	<!-- dockside gantry crane -->
-	<g pointer-events="none">
-		<rect x="12" y="96" width="15" height="832" fill="var(--crane)" />
-		<rect x="12" y="300" width="15" height="10" fill="var(--rope)" opacity="0.5" />
-		<rect x="12" y="520" width="15" height="10" fill="var(--rope)" opacity="0.5" />
-		<line x1="27" y1="130" x2="130" y2="97" stroke="var(--crane)" stroke-width="7" />
-		<rect x={WORLD.deckLeft - 34} y="86" width="530" height="14" rx="7" fill="var(--crane)" />
-		<rect x="0" y="78" width="48" height="20" rx="7" fill="var(--crane)" />
-		<rect x="4" y="120" width="34" height="26" rx="5" fill="var(--rope)" />
-	</g>
+	<Crane />
 
 	{#if hanging && dockPhase === 'docked'}
 		<g pointer-events="none">
@@ -336,17 +330,7 @@
 	<Birds rest={$session.rest} />
 
 	<!-- foreground dock the viewer stands on -->
-	<g pointer-events="none">
-		{#each [90, 270, 450] as x (x)}
-			<rect x={x - 8} y="902" width="16" height="26" rx="3" fill="var(--dock-dark)" />
-			<rect x={x - 10} y="900" width="20" height="6" rx="3" fill="var(--dock-dark)" />
-		{/each}
-		<rect y="920" width={WORLD.width} height="40" fill="var(--dock)" />
-		<rect y="920" width={WORLD.width} height="5" fill="var(--dock-dark)" />
-		{#each [68, 136, 204, 272, 340, 408, 476] as x (x)}
-			<rect x={x} y="928" width="3" height="32" fill="var(--dock-dark)" opacity="0.45" />
-		{/each}
-	</g>
+	<Dock />
 
 	{#if overlayUp}
 		<rect width={WORLD.width} height={WORLD.height} fill="#0b2530" opacity="0.45" />
