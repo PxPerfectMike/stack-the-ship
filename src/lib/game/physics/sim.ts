@@ -52,7 +52,29 @@ export function createSim(): Sim {
 		WORLD.lipH,
 		{ isStatic: true, label: 'lip' }
 	);
-	Composite.add(engine.world, [deck, lipL, lipR]);
+	// The whole hull is solid, not just the cargo deck: items tipping over a
+	// lip land on the bow foredeck (under the cab) or graze the stern sliver
+	// instead of ghosting through painted ship. Two stepped rects follow the
+	// bow rake; the pilot cab is deliberately NOT solid.
+	const bowTop = Bodies.rectangle(
+		(WORLD.deckRight + WORLD.hullRight) / 2,
+		WORLD.deckY + 30,
+		WORLD.hullRight - WORLD.deckRight,
+		60,
+		{ isStatic: true, label: 'hull' }
+	);
+	const bowLower = Bodies.rectangle(WORLD.deckRight + 14, WORLD.deckY + 90, 28, 60, {
+		isStatic: true,
+		label: 'hull'
+	});
+	const stern = Bodies.rectangle(
+		(WORLD.hullLeft + WORLD.deckLeft) / 2,
+		WORLD.deckY + 60,
+		WORLD.deckLeft - WORLD.hullLeft,
+		120,
+		{ isStatic: true, label: 'hull' }
+	);
+	Composite.add(engine.world, [deck, lipL, lipR, bowTop, bowLower, stern]);
 	return { engine, cargo: [] };
 }
 

@@ -103,6 +103,30 @@ describe('sim', () => {
 		runToRest(sim);
 		expect(hits).toBeGreaterThan(0);
 	});
+	it('the bow foredeck is solid — a crate resting on it stays put', () => {
+		const sim = createSim();
+		// place directly on the shelf (bottom 1px above it) — wide items that
+		// straddle the lip may still tumble off; that part is emergent comedy
+		rebuildFromRest(sim, [{ cargoId: 'crate', x: 519, y: 729, angle: 0 }]);
+		const rs = runToRest(sim);
+		expect(rs.done).toBe(true);
+		const rest = restState(sim);
+		expect(isOverboard(rest)).toBe(false);
+		expect(rest[0].x).toBeGreaterThan(WORLD.deckRight);
+		expect(rest[0].y).toBeLessThan(WORLD.deckY);
+	});
+	it('an item past the bow still splashes into the sea', () => {
+		const sim = createSim();
+		spawnCargo(sim, 'crate', 590, 300);
+		runToRest(sim);
+		expect(isOverboard(restState(sim))).toBe(true);
+	});
+	it('an item left of the stern still splashes into the sea', () => {
+		const sim = createSim();
+		spawnCargo(sim, 'crate', 0, 300);
+		runToRest(sim);
+		expect(isOverboard(restState(sim))).toBe(true);
+	});
 	it('rebuildFromRest restores compound bodies at their exact pose', () => {
 		const sim = createSim();
 		spawnCargo(sim, 'bathtub', 270, 400);
