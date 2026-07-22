@@ -4,10 +4,16 @@
 	// objects; a chosen few are alive (pig, moai, duck, gnome) — spec §1.
 	// `overlay` renders an item's FRONT layer only (drawn after all cargo so
 	// contents nest behind it) — currently just the bathtub's front wall.
+	import { getCargo } from '$lib/game/cargo';
+
 	let { id, overlay = false }: { id: string; overlay?: boolean } = $props();
+
+	// art is authored at the def's original size; artScale maps it to world size
+	const s = $derived(getCargo(id).artScale);
 </script>
 
-{#if overlay}
+<g transform="scale({s})">
+	{#if overlay}
 	{#if id === 'bathtub'}
 		<g>
 			<path
@@ -356,4 +362,5 @@
 		<path d="M -13 -21.3 Q -3 0 -13 21.3" fill="none" stroke="#2b2024" stroke-width="2" />
 		<path d="M 13 -21.3 Q 3 0 13 21.3" fill="none" stroke="#2b2024" stroke-width="2" />
 	</g>
-{/if}
+	{/if}
+</g>
