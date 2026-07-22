@@ -27,7 +27,17 @@ export const CARGO: CargoDef[] = [
 	{ id: 'anchor', name: 'Anchor', w: 80, h: 90, density: 0.01, restitution: 0.01, friction: 0.9, parts: [rect(0, -25, 16, 40), rect(0, 25, 80, 24)] },
 	{ id: 'beachball', name: 'Beach Ball', w: 52, h: 52, density: 0.0002, restitution: 0.8, friction: 0.2, parts: [{ kind: 'circle', x: 0, y: 0, r: 26 }] },
 	{ id: 'pig', name: 'Anxious Pig', w: 84, h: 60, density: 0.001, restitution: 0.15, friction: 0.7, parts: [rect(-8, 4, 64, 44), rect(30, -8, 24, 26)] },
-	{ id: 'sink', name: 'Kitchen Sink', w: 76, h: 46, density: 0.0014, restitution: 0.05, friction: 0.5, parts: [rect(0, 12, 76, 20), rect(-30, -10, 14, 26), rect(30, -10, 14, 26)] }
+	{ id: 'sink', name: 'Kitchen Sink', w: 76, h: 46, density: 0.0014, restitution: 0.05, friction: 0.5, parts: [rect(0, 12, 76, 20), rect(-30, -10, 14, 26), rect(30, -10, 14, 26)] },
+	{ id: 'gnome', name: 'Garden Gnome', w: 46, h: 88, density: 0.0015, restitution: 0.05, friction: 0.6, parts: [rect(0, 14, 46, 60), rect(0, -29, 26, 30)] },
+	{ id: 'duck', name: 'Giant Rubber Duck', w: 90, h: 78, density: 0.0004, restitution: 0.6, friction: 0.4, parts: [rect(0, 13, 90, 52), { kind: 'circle', x: 22, y: -24, r: 15 }] },
+	{ id: 'cone', name: 'Traffic Cone', w: 60, h: 70, density: 0.0008, restitution: 0.1, friction: 0.7, parts: [rect(0, 28, 60, 14), rect(0, -7, 22, 56)] },
+	{ id: 'washer', name: 'Washing Machine', w: 70, h: 82, density: 0.0025, restitution: 0.03, friction: 0.6, parts: [rect(0, 0, 70, 82)] },
+	{ id: 'sofa', name: 'Sofa', w: 140, h: 62, density: 0.0009, restitution: 0.12, friction: 0.7, parts: [rect(0, 15, 140, 32), rect(-35, -15, 70, 32)] },
+	{ id: 'safe', name: 'Bank Safe', w: 70, h: 74, density: 0.012, restitution: 0.01, friction: 0.9, parts: [rect(0, 0, 70, 74)] },
+	{ id: 'mattress', name: 'Mattress', w: 130, h: 30, density: 0.0005, restitution: 0.35, friction: 0.8, parts: [rect(0, 0, 130, 30)] },
+	{ id: 'cake', name: 'Wedding Cake', w: 90, h: 86, density: 0.0007, restitution: 0.05, friction: 0.5, parts: [rect(0, 28, 90, 30), rect(0, -1, 64, 28), rect(0, -29, 40, 28)] },
+	{ id: 'potty', name: 'Porta-Potty', w: 64, h: 110, density: 0.0008, restitution: 0.1, friction: 0.5, parts: [rect(0, 0, 64, 110)] },
+	{ id: 'disco', name: 'Disco Ball', w: 50, h: 50, density: 0.0018, restitution: 0.4, friction: 0.15, parts: [{ kind: 'circle', x: 0, y: 0, r: 25 }] }
 ];
 
 export const ALL_IDS: string[] = CARGO.map((c) => c.id);

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { ALL_IDS, CARGO, getCargo } from '$lib/game/cargo';
 
 describe('cargo catalog', () => {
-	it('has 12 unique items', () => {
-		expect(CARGO.length).toBe(12);
-		expect(new Set(ALL_IDS).size).toBe(12);
+	it('has 22 unique items', () => {
+		expect(CARGO.length).toBe(22);
+		expect(new Set(ALL_IDS).size).toBe(22);
 	});
 	it('every part stays inside its declared bounding box', () => {
 		for (const def of CARGO) {
