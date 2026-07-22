@@ -142,21 +142,22 @@
 	</g>
 {:else if id === 'pig'}
 	<g>
-		<path d="M -40 -2 q -5 -3 -3 -8 q 5 -2 4 3" fill="none" stroke="#e08999" stroke-width="2.5" stroke-linecap="round" />
-		<rect x="-40" y="-18" width="64" height="44" rx="20" fill="#f2a7b3" />
-		{#each [-34, -21, 3, 15] as lx (lx)}
-			<rect x={lx} y="18" width="9" height="8" rx="4" fill="#e08999" />
+		<path d="M -39 -2 q -7 -5 -3 -9 q 4 -3 4 1 q 0 3 -3 2" fill="none" stroke="#e894a6" stroke-width="2.5" stroke-linecap="round" />
+		<path
+			d="M -40 8 Q -40 -18 -16 -18 L 10 -18 Q 14 -20.5 20 -21 Q 36 -21 40 -14 Q 42 -10 42 -4 Q 42 4 34 8 Q 26 12 18 14 Q 2 18 -10 18 Q -34 18 -39 12 Q -40 10 -40 8 Z"
+			fill="#f4b3be"
+		/>
+		{#each [-35, -17, 1, 13] as lx (lx)}
+			<rect x={lx} y="15" width="9" height="11" rx="4" fill="#f4b3be" />
 		{/each}
-		<rect x="18" y="-21" width="24" height="26" rx="10" fill="#f2a7b3" />
-		<path d="M 20 -21 L 23 -30 L 29 -22 Z" fill="#e08999" />
-		<path d="M 33 -21 L 39 -29 L 42 -19 Z" fill="#e08999" />
-		<rect x="34" y="-9" width="11" height="9" rx="4" fill="#e08999" />
-		<circle cx="37" cy="-4.5" r="1.3" fill="#8f5561" />
-		<circle cx="41.5" cy="-4.5" r="1.3" fill="#8f5561" />
-		<circle cx="26" cy="-12" r="3.6" fill="#ffffff" />
-		<circle cx="25.2" cy="-11" r="1.6" fill="#2b2024" />
-		<path d="M 22 -17.5 q 3 -2 6 -0.5" fill="none" stroke="#c97f8e" stroke-width="1.8" stroke-linecap="round" />
-		<path d="M 15 -20 q 3 4 0 6 q -3 -2 0 -6 Z" fill="#7ec3d8" />
+		<path d="M 19 -19 Q 20 -27 25 -29 Q 28 -25 26 -18 Z" fill="#e894a6" />
+		<path d="M 31 -18 Q 33 -27 38 -28 Q 40 -23 37 -16 Z" fill="#e894a6" />
+		<ellipse cx="26" cy="-12" rx="1.9" ry="2.7" fill="#2b2024" />
+		<ellipse cx="38" cy="-12" rx="1.9" ry="2.7" fill="#2b2024" />
+		<rect x="29" y="-7" width="12" height="9" rx="4" fill="#e894a6" />
+		<ellipse cx="33" cy="-2.5" rx="1.2" ry="2" fill="#c96b80" />
+		<ellipse cx="37" cy="-2.5" rx="1.2" ry="2" fill="#c96b80" />
+		<path d="M 14 -27 q 2.6 3.5 0 5.2 q -2.6 -1.7 0 -5.2 Z" fill="#7ec3d8" />
 	</g>
 {:else if id === 'sink'}
 	<g>
