@@ -22,16 +22,22 @@
 	import { isOverboard, WORLD } from '$lib/game/rules';
 	import { shipName } from '$lib/game/shipNames';
 	import {
-		HOOK_Y,
-		predictedLandingX,
-		releaseInput,
+		bobX,
+		bobY,
+		newPend,
+		predictedLandingXPend,
+		releaseFromPend,
+		ROPE_L,
+		stepPend,
+		SWING_CENTER_X,
+		TROLLEY_Y,
 		trolleyX,
+		type PendState,
 		type TossInput
 	} from '$lib/game/swing';
 	import {
 		BOT_THINK_MS,
 		CRANE_DROP_ANTICIPATION_MS,
-		CRANE_SWAY_MS,
 		DEPART_BEAT_MS,
 		EASE_ARRIVE,
 		EASE_DEPART,
@@ -71,13 +77,16 @@
 	let view = $state<CargoPose[]>([]);
 	let debugView = $state<{ cargoId: string; parts: PartShape[] }[]>([]);
 	let debug = $state(false);
-	let trolleyPos = $state(270);
+	let trolleyPos = $state(SWING_CENTER_X);
+	let pend: PendState = newPend();
+	let bob = $state({ x: SWING_CENTER_X, y: TROLLEY_Y + ROPE_L });
+	let lastT = 0;
 	let dockPhase = $state<'arriving' | 'docked' | 'departing'>('arriving');
 	let vesselTx = $state(-660);
 	let vesselTransition = $state('none');
 	let overlayUp = $state(false);
 	let vesselName = $state('');
-	let pendingRelease = $state<{ x: number; input: TossInput } | null>(null);
+	let pendingRelease = $state<{ x: number; y: number; input: TossInput } | null>(null);
 	let splash = $state<{ x: number; key: number } | null>(null);
 	let raf = 0;
 	let trolleyRaf = 0;
@@ -89,8 +98,6 @@
 	const t0 = performance.now();
 
 	const hanging = $derived($session.phase === 'aiming' ? getCargo($session.currentCargo) : null);
-	const hangOffset = $derived(hanging ? hanging.h / 2 + 12 : 0);
-	const hangX = $derived(pendingRelease ? pendingRelease.x : trolleyPos);
 	const spilledName = $derived.by(() => {
 		const sunk = $session.rest.find((b) => b.y > WORLD.waterlineY);
 		return sunk ? getCargo(sunk.cargoId).name.toLowerCase() : 'cargo';
@@ -127,6 +134,8 @@
 		overlayUp = false;
 		splash = null;
 		pendingRelease = null;
+		pend = newPend();
+		bob = { x: SWING_CENTER_X, y: TROLLEY_Y + ROPE_L };
 		startMatch({ seed, difficulty, gentle: params.get('gentle') === '1' });
 		syncView();
 		emit('match-reset');
@@ -152,9 +161,8 @@
 		later(SHIP_ARRIVE_MS / fast + 100, () => (dockPhase = 'docked'));
 	}
 
-	function doDrop(r: { x: number; input: TossInput }): void {
-		const def = getCargo($session.currentCargo);
-		const body = spawnCargo(sim, $session.currentCargo, r.x, HOOK_Y + def.h / 2 + 12);
+	function doDrop(r: { x: number; y: number; input: TossInput }): void {
+		const body = spawnCargo(sim, $session.currentCargo, r.x, r.y);
 		applyToss(body, r.input);
 		beginSimulating();
 		tossImpacted = false;
@@ -184,8 +192,7 @@
 	// cable for a beat, then let go.
 	function beginRelease(): void {
 		if ($session.phase !== 'aiming' || dockPhase !== 'docked' || pendingRelease) return;
-		const r = releaseInput(performance.now() - t0);
-		pendingRelease = { x: r.x, input: r.input };
+		pendingRelease = releaseFromPend(pend, performance.now() - t0);
 		later(CRANE_DROP_ANTICIPATION_MS / fast, () => {
 			if (pendingRelease) {
 				doDrop(pendingRelease);
@@ -211,7 +218,7 @@
 				if (
 					target.armed &&
 					!pendingRelease &&
-					Math.abs(predictedLandingX(performance.now() - t0) - target.x) <
+					Math.abs(predictedLandingXPend(pend, performance.now() - t0) - target.x) <
 						RELEASE_TOLERANCE[$session.difficulty]
 				) {
 					beginRelease();
@@ -244,9 +251,13 @@
 
 	onMount(() => {
 		const trolleyLoop = (): void => {
+			const now = performance.now() - t0;
 			if ($session.phase === 'aiming' && !pendingRelease) {
-				trolleyPos = trolleyX(performance.now() - t0);
+				pend = stepPend(pend, lastT, now - lastT);
+				trolleyPos = trolleyX(now);
+				bob = { x: bobX(pend, now), y: bobY(pend) };
 			}
+			lastT = now;
 			trolleyRaf = requestAnimationFrame(trolleyLoop);
 		};
 		trolleyRaf = requestAnimationFrame(trolleyLoop);
@@ -265,7 +276,7 @@
 	viewBox="0 0 {WORLD.width} {WORLD.height}"
 	role="application"
 	aria-label="Stack the Ship game"
-	style="--sway-t: {CRANE_SWAY_MS}ms; --anticipation-t: {CRANE_DROP_ANTICIPATION_MS}ms; --overlay-in: {OVERLAY_IN_MS}ms; --pop: {EASE_POP}"
+	style="--anticipation-t: {CRANE_DROP_ANTICIPATION_MS}ms; --overlay-in: {OVERLAY_IN_MS}ms; --pop: {EASE_POP}"
 	onpointerdown={onDown}
 >
 	<Backdrop {amb} />
@@ -312,19 +323,20 @@
 
 	{#if hanging && dockPhase === 'docked'}
 		<g pointer-events="none">
-			<rect x={hangX - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
-			<circle cx={hangX - 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
-			<circle cx={hangX + 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
+			<rect x={trolleyPos - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
+			<circle cx={trolleyPos - 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
+			<circle cx={trolleyPos + 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
 			<g class="hang" class:dip={pendingRelease !== null}>
-				<line x1={hangX} y1="100" x2={hangX} y2={HOOK_Y + 2} stroke="var(--rope)" stroke-width="3" />
-				<path
-					d="M {hangX} {HOOK_Y - 2} q 0 10 -6 10"
-					fill="none"
+				<!-- rope runs behind the item to its centre — same length for every item -->
+				<line
+					x1={trolleyPos}
+					y1={TROLLEY_Y}
+					x2={bob.x}
+					y2={bob.y}
 					stroke="var(--rope)"
-					stroke-width="4"
-					stroke-linecap="round"
+					stroke-width="3"
 				/>
-				<g transform="translate({hangX} {HOOK_Y + hangOffset})">
+				<g transform="translate({bob.x} {bob.y})">
 					<CargoArt id={hanging.id} />
 				</g>
 			</g>
@@ -386,21 +398,10 @@
 		fill: var(--ink);
 	}
 	.hang {
-		animation: sway var(--sway-t) ease-in-out infinite alternate;
-		transform-box: fill-box;
-		transform-origin: top center;
 		transition: translate var(--anticipation-t) ease-in;
 	}
 	.hang.dip {
 		translate: 0 8px;
-	}
-	@keyframes sway {
-		from {
-			rotate: -2.5deg;
-		}
-		to {
-			rotate: 2.5deg;
-		}
 	}
 	.splash {
 		animation: splash-out 700ms ease-out forwards;
@@ -440,7 +441,6 @@
 		fill: #17323f;
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.hang,
 		.splash,
 		.card {
 			animation: none;

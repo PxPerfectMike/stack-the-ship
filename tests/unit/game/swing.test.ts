@@ -1,13 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { SWING_PERIOD_MS } from '$lib/game/timing';
 import {
-	DROP_CARRY,
-	HOOK_Y,
+	bobX,
+	bobY,
+	newPend,
+	predictedLandingXPend,
+	releaseFromPend,
+	ROPE_L,
+	stepPend,
 	SWING_CENTER_X,
 	SWING_SPAN,
-	releaseInput,
+	TROLLEY_Y,
 	trolleyX
 } from '$lib/game/swing';
+
+const run = (ms: number, step = 8) => {
+	let p = newPend();
+	for (let t = 0; t < ms; t += step) p = stepPend(p, t, step);
+	return p;
+};
 
 describe('trolleyX', () => {
 	it('starts at centre and reaches both extremes over a period', () => {
@@ -18,27 +29,48 @@ describe('trolleyX', () => {
 	});
 });
 
-describe('releaseInput', () => {
-	it('drops with lateral carry matching motion direction at centre', () => {
-		const r = releaseInput(0); // moving toward +x at centre
-		expect(r.x).toBeCloseTo(SWING_CENTER_X, 5);
-		expect(r.input.vx).toBeGreaterThan(0);
-		expect(r.input.vy).toBe(0);
+describe('driven pendulum', () => {
+	it('is deterministic', () => {
+		expect(run(5000)).toEqual(run(5000));
 	});
-	it('has near-zero carry at the extremes', () => {
-		const r = releaseInput(SWING_PERIOD_MS / 4);
-		expect(Math.abs(r.input.vx)).toBeLessThan(0.01);
+	it('actually swings but stays bounded under the crane drive', () => {
+		let p = newPend();
+		let maxTheta = 0;
+		for (let t = 0; t < SWING_PERIOD_MS * 6; t += 8) {
+			p = stepPend(p, t, 8);
+			maxTheta = Math.max(maxTheta, Math.abs(p.theta));
+		}
+		expect(maxTheta).toBeGreaterThan(0.05);
+		expect(maxTheta).toBeLessThan(1.0);
 	});
-	it('carry scales with DROP_CARRY and stays bounded', () => {
-		const vmax = Math.abs(releaseInput(0).input.vx);
-		expect(vmax).toBeGreaterThan(1);
-		expect(vmax).toBeLessThan(12);
-		expect(vmax).toBeCloseTo(
-			SWING_SPAN * ((2 * Math.PI) / SWING_PERIOD_MS) * (1000 / 60) * DROP_CARRY,
-			3
-		);
+	it('bob hangs below the trolley on a constant-length rope', () => {
+		const t = 3000;
+		const p = run(t);
+		const dx = bobX(p, t) - trolleyX(t);
+		const dy = bobY(p) - TROLLEY_Y;
+		expect(Math.hypot(dx, dy)).toBeCloseTo(ROPE_L, 6);
+		expect(dy).toBeGreaterThan(0);
 	});
-	it('hook height is above the deck play area', () => {
-		expect(HOOK_Y).toBeLessThan(300);
+	it('release velocity stays bounded for gameplay', () => {
+		let p = newPend();
+		for (let t = 0; t < SWING_PERIOD_MS * 4; t += 8) {
+			p = stepPend(p, t, 8);
+			const r = releaseFromPend(p, t + 8);
+			expect(Math.abs(r.input.vx)).toBeLessThan(8);
+			expect(Math.abs(r.input.vy)).toBeLessThan(3);
+		}
+	});
+	it('predicted landing sweeps across most of the deck', () => {
+		let p = newPend();
+		let lo = Infinity;
+		let hi = -Infinity;
+		for (let t = 0; t < SWING_PERIOD_MS * 3; t += 8) {
+			p = stepPend(p, t, 8);
+			const x = predictedLandingXPend(p, t + 8);
+			lo = Math.min(lo, x);
+			hi = Math.max(hi, x);
+		}
+		expect(lo).toBeLessThan(SWING_CENTER_X - 100);
+		expect(hi).toBeGreaterThan(SWING_CENTER_X + 100);
 	});
 });

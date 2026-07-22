@@ -11,7 +11,13 @@ import {
 	spawnCargo
 } from '$lib/game/physics/sim';
 import { isOverboard, WORLD } from '$lib/game/rules';
-import { HOOK_Y, predictedLandingX, releaseInput } from '$lib/game/swing';
+import {
+	newPend,
+	predictedLandingXPend,
+	releaseFromPend,
+	stepPend,
+	type TossInput
+} from '$lib/game/swing';
 import { SWING_PERIOD_MS } from '$lib/game/timing';
 
 describe('planBotTargetX', () => {
@@ -36,18 +42,20 @@ describe('planBotTargetX', () => {
 	it('difficulty 3 on an empty deck never self-destructs (fixed seeds, real release)', () => {
 		for (const seed of [1, 2, 3, 4, 5]) {
 			const target = planBotTargetX([], 3, mulberry32(seed));
-			// release when the predicted landing point crosses the target
-			let tRel = 0;
-			for (let t = 0; t <= SWING_PERIOD_MS; t += 4) {
-				if (Math.abs(predictedLandingX(t) - target) < 4) {
-					tRel = t;
-					break;
+			// run the live pendulum and release when the predicted landing
+			// point crosses the target — exactly what the in-game bot does
+			let pend = newPend();
+			let rel: { x: number; y: number; input: TossInput } | null = null;
+			for (let t = 0; t < SWING_PERIOD_MS * 4 && !rel; t += 8) {
+				pend = stepPend(pend, t, 8);
+				if (Math.abs(predictedLandingXPend(pend, t + 8) - target) < RELEASE_TOLERANCE[3]) {
+					rel = releaseFromPend(pend, t + 8);
 				}
 			}
-			const { x, input } = releaseInput(tRel);
+			expect(rel).toBeTruthy();
 			const sim = createSim();
-			const body = spawnCargo(sim, 'crate', x, HOOK_Y);
-			applyToss(body, input);
+			const body = spawnCargo(sim, 'crate', rel!.x, rel!.y);
+			applyToss(body, rel!.input);
 			const rs = newRunState();
 			advance(sim, rs, MAX_FRAMES);
 			expect(isOverboard(restState(sim))).toBe(false);

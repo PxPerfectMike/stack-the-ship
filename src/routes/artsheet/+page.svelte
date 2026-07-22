@@ -8,7 +8,7 @@
 	import GullArt from '$lib/components/game/GullArt.svelte';
 	import Ship from '$lib/components/game/Ship.svelte';
 	import { CARGO } from '$lib/game/cargo';
-	import { HOOK_Y } from '$lib/game/swing';
+	import { ROPE_L, TROLLEY_Y } from '$lib/game/swing';
 	import { WORLD } from '$lib/game/rules';
 
 	const SCALE = 1.5;
@@ -89,15 +89,15 @@
 				<rect x={hangX - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
 				<circle cx={hangX - 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
 				<circle cx={hangX + 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
-				<line x1={hangX} y1="100" x2={hangX} y2={HOOK_Y + 2} stroke="var(--rope)" stroke-width="3" />
-				<path
-					d="M {hangX} {HOOK_Y - 2} q 0 10 -6 10"
-					fill="none"
+				<line
+					x1={hangX}
+					y1={TROLLEY_Y}
+					x2={hangX}
+					y2={TROLLEY_Y + ROPE_L}
 					stroke="var(--rope)"
-					stroke-width="4"
-					stroke-linecap="round"
+					stroke-width="3"
 				/>
-				<g transform="translate({hangX} {HOOK_Y + hangDef.h / 2 + 12})">
+				<g transform="translate({hangX} {TROLLEY_Y + ROPE_L})">
 					<CargoArt id={hangDef.id} />
 				</g>
 			</svg>
