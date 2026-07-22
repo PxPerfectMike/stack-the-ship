@@ -129,15 +129,18 @@
 		<circle cx="7" cy="15" r="1.6" fill="#5e3f2e" />
 		<rect x="6.2" y="15" width="1.6" height="5" fill="#5e3f2e" />
 	</g>
-{:else if id === 'anchor'}
+{:else if id === 'anvil'}
 	<g>
-		<circle cx="0" cy="-38" r="5.5" fill="none" stroke="#3b5578" stroke-width="5" />
-		<rect x="-27" y="-27" width="54" height="8" rx="4" fill="#2c4265" />
-		<path d="M -5 -30 L 5 -30 L 3.5 32 L -3.5 32 Z" fill="#3b5578" />
-		<path d="M -38 10 Q -40 30 -16 36 L 16 36 Q 40 30 38 10 L 33 14 Q 33 27 12 30 L -12 30 Q -33 27 -33 14 Z" fill="#3b5578" />
-		<path d="M -40 12 L -37 -3 L -26 8 Z" fill="#3b5578" />
-		<path d="M 40 12 L 37 -3 L 26 8 Z" fill="#3b5578" />
-		<path d="M -6 29 L 0 37 L 6 29 Z" fill="#3b5578" />
+		<path
+			d="M -8 -32 L 45 -32 L 45 -12 L -8 -12 Q -34 -12 -43 -24 Q -45 -28 -40 -29.5 Q -26 -32 -8 -32 Z"
+			fill="#4a5158"
+		/>
+		<rect x="-36" y="-32" width="81" height="5" rx="2.5" fill="#5c646c" />
+		<rect x="38" y="-30" width="7" height="18" rx="2" fill="#3d444b" />
+		<rect x="26" y="-24" width="7" height="7" rx="1.5" fill="#2b3138" />
+		<path d="M -17 -12 L 17 -12 Q 12 0 17 12 L -17 12 Q -12 0 -17 -12 Z" fill="#42484f" />
+		<path d="M -26 12 L 26 12 L 31 20 L 32 24 L 32 32 L -32 32 L -32 24 L -31 20 Z" fill="#4a5158" />
+		<rect x="-32" y="27" width="64" height="5" fill="#363c42" />
 	</g>
 {:else if id === 'beachball'}
 	<g>
