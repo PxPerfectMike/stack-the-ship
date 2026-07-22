@@ -109,11 +109,12 @@
 			stroke="#9fb3bd"
 			stroke-width="2.5"
 		/>
+		<rect x="-48" y="-36" width="4.5" height="15" rx="2" fill="#8fa3ad" />
+		<path d="M -45.8 -34 Q -45.8 -40 -40 -40 Q -34.5 -40 -34.5 -33" fill="none" stroke="#8fa3ad" stroke-width="4.5" stroke-linecap="round" />
+		<circle cx="-51" cy="-28" r="2.6" fill="#7e929e" />
+		<path d="M -34.5 -29 q 1.8 2.6 0 4 q -1.8 -1.4 0 -4 Z" fill="#7ec3d8" />
 		<rect x="-52" y="-23" width="104" height="6" rx="3" fill="#ffffff" />
 		<circle cx="0" cy="-8" r="3" fill="#bfd0d8" />
-		<circle cx="-46" cy="-13" r="2.5" fill="#8fa3ad" />
-		<circle cx="-38" cy="-13" r="2.5" fill="#8fa3ad" />
-		<path d="M -42 -17 q 6 0 6 5" fill="none" stroke="#8fa3ad" stroke-width="3.5" stroke-linecap="round" />
 	</g>
 {:else if id === 'wardrobe'}
 	<g>
@@ -170,17 +171,17 @@
 	<g>
 		{#each [-1, 1] as side (side)}
 			<g transform="scale({side} 1)">
-				<rect x="-36" y="-6" width="12" height="9" rx="3" fill="#aab9c2" />
-				<rect x="-33" y="-17" width="6" height="12" fill="#aab9c2" />
-				<path d="M -30 -10 q 8 0 8 7" fill="none" stroke="#aab9c2" stroke-width="4" stroke-linecap="round" />
-				<circle cx="-30" cy="-19" r="3.4" fill="#8fa3ad" />
+				<rect x="-29" y="-6" width="12" height="9" rx="3" fill="#aab9c2" />
+				<rect x="-26" y="-17" width="6" height="12" fill="#aab9c2" />
+				<path d="M -23 -10 q 8 0 8 7" fill="none" stroke="#aab9c2" stroke-width="4" stroke-linecap="round" />
+				<circle cx="-23" cy="-19" r="3.4" fill="#8fa3ad" />
 				{#each [[0, -4.2], [0, 4.2], [-4.2, 0], [4.2, 0]] as [dx, dy], i (i)}
-					<circle cx={-30 + dx} cy={-19 + dy} r="1.7" fill="#8fa3ad" />
+					<circle cx={-23 + dx} cy={-19 + dy} r="1.7" fill="#8fa3ad" />
 				{/each}
 			</g>
 		{/each}
-		<circle cx="-30" cy="-19" r="1.5" fill="#d64545" />
-		<circle cx="30" cy="-19" r="1.5" fill="#3f88c5" />
+		<circle cx="-23" cy="-19" r="1.5" fill="#d64545" />
+		<circle cx="23" cy="-19" r="1.5" fill="#3f88c5" />
 		<rect x="-38" y="2" width="76" height="20" rx="8" fill="#eef2f4" stroke="#9fb3bd" stroke-width="2.5" />
 		<rect x="-32" y="5" width="64" height="6" rx="3" fill="#bfd0d8" />
 		<circle cx="0" cy="15" r="3.2" fill="#7e929e" />
@@ -248,16 +249,16 @@
 	</g>
 {:else if id === 'sofa'}
 	<g>
-		<rect x="-70" y="-31" width="140" height="62" rx="10" fill="#c9942f" />
-		<rect x="-63" y="-27" width="60" height="26" rx="9" fill="#e2b45c" />
-		<rect x="3" y="-27" width="60" height="26" rx="9" fill="#e2b45c" />
-		<rect x="-54" y="-4" width="52" height="19" rx="8" fill="#d9a441" />
-		<rect x="2" y="-4" width="52" height="19" rx="8" fill="#d9a441" />
-		<rect x="-70" y="-14" width="15" height="38" rx="7" fill="#d9a441" />
-		<rect x="55" y="-14" width="15" height="38" rx="7" fill="#d9a441" />
-		<rect x="-70" y="-14" width="15" height="7" rx="3.5" fill="#e2b45c" />
-		<rect x="55" y="-14" width="15" height="7" rx="3.5" fill="#e2b45c" />
-		<rect x="-70" y="20" width="140" height="11" rx="4" fill="#b8862e" />
+		<rect x="-70" y="-31" width="140" height="62" rx="10" fill="#2f8c76" />
+		<rect x="-63" y="-27" width="60" height="26" rx="9" fill="#52b598" />
+		<rect x="3" y="-27" width="60" height="26" rx="9" fill="#52b598" />
+		<rect x="-54" y="-4" width="52" height="19" rx="8" fill="#46a689" />
+		<rect x="2" y="-4" width="52" height="19" rx="8" fill="#46a689" />
+		<rect x="-70" y="-14" width="15" height="38" rx="7" fill="#3a9a81" />
+		<rect x="55" y="-14" width="15" height="38" rx="7" fill="#3a9a81" />
+		<rect x="-70" y="-14" width="15" height="7" rx="3.5" fill="#52b598" />
+		<rect x="55" y="-14" width="15" height="7" rx="3.5" fill="#52b598" />
+		<rect x="-70" y="20" width="140" height="11" rx="4" fill="#256e5c" />
 	</g>
 {:else if id === 'safe'}
 	<g>
