@@ -8,6 +8,7 @@
 	import { perchPoints } from '$lib/game/perch';
 	import type { RestBody } from '$lib/game/rules';
 	import {
+		BIRD_FLAP_MS,
 		BIRD_HOP_MS,
 		BIRD_IDLE_MIN_MS,
 		BIRD_IDLE_SPAN_MS,
@@ -153,7 +154,8 @@
 	<g
 		class="bird"
 		class:hop={b.hop}
-		style="transform: translate({b.x}px, {b.y}px); transition: transform {b.dur}ms cubic-bezier(0.45, 0.2, 0.35, 1); --hop-t: {BIRD_HOP_MS}ms"
+		class:flying={b.state !== 'perched'}
+		style="transform: translate({b.x}px, {b.y}px); transition: transform {b.dur}ms cubic-bezier(0.45, 0.2, 0.35, 1); --hop-t: {BIRD_HOP_MS}ms; --flap-t: {BIRD_FLAP_MS}ms"
 	>
 		<g style="transform: scaleX({b.face})">
 			<GullArt />
@@ -171,6 +173,24 @@
 	@keyframes hop {
 		50% {
 			translate: 0 -9px;
+		}
+	}
+	.bird.flying :global(.wing) {
+		transform-box: fill-box;
+		transform-origin: 92% 55%;
+		animation: flap var(--flap-t) ease-in-out infinite alternate;
+	}
+	@keyframes flap {
+		from {
+			rotate: 12deg;
+		}
+		to {
+			rotate: -55deg;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.bird.flying :global(.wing) {
+			animation: none;
 		}
 	}
 </style>
