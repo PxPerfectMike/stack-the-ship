@@ -21,7 +21,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # npm install, not ci: lockfiles written on Windows omit linux/wasm
+      # optional deps (npm/cli#4828) and npm ci refuses to reconcile them
+      - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run check
       - name: Build site
