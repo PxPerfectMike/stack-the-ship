@@ -42,9 +42,15 @@
 	const amb = sessionAmbience(location.search);
 
 	// --- title sign: free damped pendulum around the crane hook ---------------
+	// RULE: the sign never moves without a visible cause — a gull landing,
+	// perching (its weight tilts the equilibrium), pushing off, or the drop.
 	const SIGN_G = 0.002; // px/ms² — big sign, slow stately swing
 	const SIGN_L = 110; // pivot → board centre
-	const SIGN_DAMP = 0.0005; // light, so gull landings ring for a while
+	const SIGN_DAMP = 0.0008; // each event visibly rings down over ~3-4s
+	const GULL_KICK = 1.6e-6; // landing thump per px of perch offset (~2.7° max)
+	const GULL_PUSHOFF = 1.1e-6; // lighter than landing
+	const GULL_WEIGHT = 3.8e-9; // perched torque per px offset (~1.5° lean max)
+	const GULL_FLY_MS = 750;
 	let signTheta = $state(0);
 	let signOmega = 0;
 	let signDropY = $state(0);
@@ -62,7 +68,14 @@
 	let birdsRest = $state<RestBody[]>([]);
 
 	// --- gull on the sign ------------------------------------------------------
-	let signGull = $state<{ x: number; face: 1 | -1 } | null>(null);
+	interface SignGull {
+		x: number; // perch offset on the board
+		face: 1 | -1;
+		lx: number; // live position (sign-local), CSS transition does the flight
+		ly: number;
+		state: 'air' | 'perched';
+	}
+	let signGull = $state<SignGull | null>(null);
 
 	const timers: ReturnType<typeof setTimeout>[] = [];
 	const later = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
@@ -115,16 +128,32 @@
 		});
 	}
 
-	// A gull visits the sign now and then; its landing torques the pendulum.
+	// A gull visits the sign now and then: flies in, lands with a thump, leans
+	// the sign with its weight while perched, then visibly pushes off and
+	// leaves. Every impulse has an on-screen actor.
 	function gullVisit(): void {
-		if (dropping || signGone) return;
+		if (dropping || signGone || signGull) return;
 		const x = (Math.random() < 0.5 ? -1 : 1) * rand(50, 125);
-		signGull = { x, face: x < 0 ? 1 : -1 };
-		signOmega += x * 5e-6;
-		later(rand(5000, 11000), () => {
-			if (signGull) signOmega -= signGull.x * 3.5e-6;
-			signGull = null;
-			later(rand(6000, 14000), gullVisit);
+		const face: 1 | -1 = x < 0 ? 1 : -1;
+		signGull = { x, face, lx: x - face * 190, ly: -70, state: 'air' };
+		requestAnimationFrame(() =>
+			requestAnimationFrame(() => {
+				if (signGull) signGull = { ...signGull, lx: x, ly: 121 };
+			})
+		);
+		later(GULL_FLY_MS, () => {
+			if (!signGull || dropping) return;
+			signGull = { ...signGull, state: 'perched' };
+			signOmega += x * GULL_KICK;
+		});
+		later(GULL_FLY_MS + rand(5000, 11000), () => {
+			if (!signGull || dropping) return;
+			signOmega -= x * GULL_PUSHOFF;
+			signGull = { ...signGull, state: 'air', lx: x + face * 210, ly: -90 };
+			later(GULL_FLY_MS + 80, () => {
+				signGull = null;
+				later(rand(6000, 14000), gullVisit);
+			});
 		});
 	}
 
@@ -136,7 +165,10 @@
 				dropVy += 0.0028 * h;
 				signDropY += dropVy * h;
 			} else {
-				const acc = -(SIGN_G / SIGN_L) * Math.sin(signTheta) - SIGN_DAMP * signOmega;
+				const perchTorque =
+					signGull && signGull.state === 'perched' ? signGull.x * GULL_WEIGHT : 0;
+				const acc =
+					-(SIGN_G / SIGN_L) * Math.sin(signTheta) + perchTorque - SIGN_DAMP * signOmega;
 				signOmega += acc * h;
 				signTheta += signOmega * h;
 			}
@@ -155,8 +187,8 @@
 			onstart();
 			return;
 		}
+		// a perched gull rides the sign down — its own fault for sitting there
 		dropping = true;
-		signGull = null;
 		emit('spill'); // every gull in the harbor takes it personally
 	}
 
@@ -167,11 +199,6 @@
 		if (!reduced) {
 			later(rand(12000, 22000), beginDeparture);
 			later(rand(2500, 6000), gullVisit);
-			const breeze = () => {
-				if (!dropping) signOmega += (Math.random() < 0.5 ? -1 : 1) * rand(0.00015, 0.00045);
-				later(rand(7000, 14000), breeze);
-			};
-			later(rand(3000, 7000), breeze);
 			let lastT = performance.now();
 			const loop = (t: number): void => {
 				stepSign(t, t - lastT);
@@ -262,8 +289,14 @@
 				<text x="0" y="200" text-anchor="middle" class="sign-title shadow">THE SHIP</text>
 				<text x="0" y="198" text-anchor="middle" class="sign-title">THE SHIP</text>
 				{#if signGull}
-					<g transform="translate({signGull.x} 121) scale({signGull.face} 1)">
-						<GullArt />
+					<g
+						class="sgull"
+						class:flying={signGull.state === 'air'}
+						style="transform: translate({signGull.lx}px, {signGull.ly}px); transition: transform {GULL_FLY_MS}ms cubic-bezier(0.45, 0.2, 0.35, 1)"
+					>
+						<g style="transform: scaleX({signGull.face})">
+							<GullArt />
+						</g>
 					</g>
 				{/if}
 			</g>
@@ -366,6 +399,19 @@
 	.start-label {
 		font: 700 22px system-ui, sans-serif;
 		fill: #17323f;
+	}
+	.sgull.flying :global(.wing) {
+		transform-box: fill-box;
+		transform-origin: 92% 55%;
+		animation: flap 150ms ease-in-out infinite alternate;
+	}
+	@keyframes flap {
+		from {
+			rotate: 12deg;
+		}
+		to {
+			rotate: -55deg;
+		}
 	}
 	.splash {
 		animation: splash-out 800ms ease-out forwards;
