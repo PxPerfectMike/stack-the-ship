@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
@@ -13,7 +14,9 @@ export default defineConfig({
 
 			// Static SPA build (playbook guide 01): web deploy + Capacitor shell later.
 			adapter: adapter({ fallback: 'index.html' }),
-			alias: { $engine: 'src/lib/engine' }
+			alias: { $engine: 'src/lib/engine' },
+			// GitHub Pages serves from /stack-the-ship — CI sets BASE_PATH.
+			paths: { base: (process.env.BASE_PATH ?? '') as '' | `/${string}` }
 		})
 	]
 });
