@@ -59,6 +59,8 @@
 	} from '$lib/game/physics/sim';
 	import { beginSimulating, lateSpill, resolveToss, session, startMatch } from '$lib/game/store';
 
+	let { onmenu }: { onmenu?: () => void } = $props();
+
 	const amb = sessionAmbience(location.search);
 
 	let sim: Sim = createSim();
@@ -421,9 +423,23 @@
 				tabindex="-1"
 				style="cursor: pointer;"
 			>
-				<rect x={WORLD.width / 2 - 92} y="472" width="184" height="52" rx="14" fill="var(--crane)" />
-				<text x={WORLD.width / 2} y="506" text-anchor="middle" class="card-btn">Next ship</text>
+				<rect x={WORLD.width / 2 - 92} y="460" width="184" height="52" rx="14" fill="var(--crane)" />
+				<text x={WORLD.width / 2} y="494" text-anchor="middle" class="card-btn">Next ship</text>
 			</g>
+			{#if onmenu}
+				<g
+					onpointerdown={(e) => {
+						e.stopPropagation();
+						onmenu();
+					}}
+					role="button"
+					tabindex="-1"
+					style="cursor: pointer;"
+				>
+					<rect x={WORLD.width / 2 - 80} y="518" width="160" height="28" fill="transparent" />
+					<text x={WORLD.width / 2} y="537" text-anchor="middle" class="card-link">Back to port</text>
+				</g>
+			{/if}
 		</g>
 	{/if}
 </svg>
@@ -490,6 +506,13 @@
 	.card-btn {
 		font: 700 21px system-ui, sans-serif;
 		fill: #17323f;
+	}
+	.card-link {
+		font: 600 15px system-ui, sans-serif;
+		fill: #17323f;
+		opacity: 0.7;
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.splash,

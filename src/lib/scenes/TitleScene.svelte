@@ -38,7 +38,7 @@
 		TROLLEY_PARK_MS
 	} from '$lib/game/timing';
 
-	let { onstart }: { onstart: () => void } = $props();
+	let { onstart, entering = false }: { onstart: () => void; entering?: boolean } = $props();
 
 	const amb = sessionAmbience(location.search);
 
@@ -54,6 +54,9 @@
 	const GULL_FLY_MS = 750;
 	let signTheta = $state(0);
 	let signOmega = 0;
+	// re-entrance from the game: the trolley hauls a fresh sign out from the
+	// tower (where the game left it parked) — eased in the rAF loop
+	let slideX = $state(entering ? -SWING_SPAN : 0);
 	let signDropY = $state(0);
 	let dropping = $state(false);
 	let starting = $state(false);
@@ -166,6 +169,13 @@
 	}
 
 	function stepSign(tNow: number, dt: number): void {
+		if (slideX !== 0 && !dropping) {
+			slideX += (0 - slideX) * Math.min(1, dt * 0.004);
+			if (Math.abs(slideX) < 0.5) {
+				slideX = 0;
+				signOmega += 0.00025; // the stop swings the fresh sign a touch
+			}
+		}
 		let remaining = Math.min(dt, 80);
 		while (remaining > 0) {
 			const h = Math.min(4, remaining);
@@ -217,6 +227,7 @@
 
 	onMount(() => {
 		reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduced) slideX = 0; // no rAF loop to ease the entrance
 		vesselName = shipName(`title-${Math.random()}`);
 		makePile();
 		if (!reduced) {
@@ -282,7 +293,7 @@
 	<!-- the title sign — drawn BEFORE the water layer so it genuinely sinks -->
 	{#if !signGone}
 		<g pointer-events="none">
-			<g transform="translate({SWING_CENTER_X} {TROLLEY_Y + signDropY}) rotate({signThetaDeg})">
+			<g transform="translate({SWING_CENTER_X + slideX} {TROLLEY_Y + signDropY}) rotate({signThetaDeg})">
 				<circle cx="0" cy="2" r="5" fill="none" stroke="var(--rope)" stroke-width="3.5" />
 				<line x1="0" y1="5" x2="-100" y2="124" stroke="var(--rope)" stroke-width="3" />
 				<line x1="0" y1="5" x2="100" y2="124" stroke="var(--rope)" stroke-width="3" />
@@ -351,7 +362,9 @@
 	     where GameScene's trolley starts, so the handoff is seamless -->
 	<g
 		pointer-events="none"
-		style="transform: translateX({starting ? -SWING_SPAN : 0}px); transition: transform {TROLLEY_PARK_MS}ms cubic-bezier(0.4, 0, 0.3, 1) 250ms"
+		style="transform: translateX({starting ? -SWING_SPAN : slideX}px); transition: {starting
+			? `transform ${TROLLEY_PARK_MS}ms cubic-bezier(0.4, 0, 0.3, 1) 250ms`
+			: 'none'}"
 	>
 		<rect x={SWING_CENTER_X - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
 	</g>

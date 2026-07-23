@@ -7,10 +7,19 @@
 	let screen = $state<'title' | 'game'>(
 		params.has('phase') || params.get('screen') === 'game' ? 'game' : 'title'
 	);
+	// Returning to the title mid-session gets the "crane hauls out a fresh
+	// sign" entrance instead of everything teleporting into place.
+	let visitedGame = $state(screen === 'game');
 </script>
 
 {#if screen === 'title'}
-	<TitleScene onstart={() => (screen = 'game')} />
+	<TitleScene
+		entering={visitedGame}
+		onstart={() => {
+			visitedGame = true;
+			screen = 'game';
+		}}
+	/>
 {:else}
-	<GameScene />
+	<GameScene onmenu={() => (screen = 'title')} />
 {/if}
