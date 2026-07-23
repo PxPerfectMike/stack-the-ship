@@ -1,11 +1,3 @@
-<script module lang="ts">
-	import { rollAmbience, type Ambience } from '$lib/game/ambience';
-
-	// Shared-session ambience (guide 02): first mount rolls, later mounts
-	// inherit, next app launch re-rolls.
-	let sessionAmbience: Ambience | undefined;
-</script>
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { hashString, mulberry32 } from '$engine/rng';
@@ -15,7 +7,7 @@
 	import Crane from '$lib/components/game/Crane.svelte';
 	import Dock from '$lib/components/game/Dock.svelte';
 	import Ship from '$lib/components/game/Ship.svelte';
-	import { TODS, WXS } from '$lib/game/ambience';
+	import { sessionAmbience } from '$lib/game/sessionAmbience';
 	import { RELEASE_TOLERANCE, planBotTargetX } from '$lib/game/bot';
 	import { getCargo } from '$lib/game/cargo';
 	import { emit } from '$lib/game/events';
@@ -62,16 +54,7 @@
 	} from '$lib/game/physics/sim';
 	import { beginSimulating, resolveToss, session, startMatch } from '$lib/game/store';
 
-	sessionAmbience ??= rollAmbience(mulberry32((Math.random() * 4294967296) >>> 0));
-	const ambParams = new URLSearchParams(location.search);
-	const amb: Ambience = {
-		tod: (TODS as readonly string[]).includes(ambParams.get('tod') ?? '')
-			? (ambParams.get('tod') as Ambience['tod'])
-			: sessionAmbience.tod,
-		wx: (WXS as readonly string[]).includes(ambParams.get('wx') ?? '')
-			? (ambParams.get('wx') as Ambience['wx'])
-			: sessionAmbience.wx
-	};
+	const amb = sessionAmbience(location.search);
 
 	let sim: Sim = createSim();
 	let view = $state<CargoPose[]>([]);
