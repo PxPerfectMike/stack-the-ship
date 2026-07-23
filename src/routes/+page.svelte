@@ -9,7 +9,7 @@
 	);
 	// Returning to the title mid-session gets the "crane hauls out a fresh
 	// sign" entrance instead of everything teleporting into place.
-	let visitedGame = $state(screen === 'game');
+	let visitedGame = $state(params.has('phase') || params.get('screen') === 'game');
 </script>
 
 {#if screen === 'title'}

@@ -5,7 +5,7 @@
 	// loaded with absurd (physics-settled) cargo piles, dwell, and depart on
 	// randomized timings. "Start Loading" releases the sign into the sea — the
 	// menu literally becomes the first drop of the shift.
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import Backdrop from '$lib/components/game/Backdrop.svelte';
 	import Birds from '$lib/components/game/Birds.svelte';
 	import CargoArt from '$lib/components/game/CargoArt.svelte';
@@ -56,7 +56,7 @@
 	let signOmega = 0;
 	// re-entrance from the game: the trolley hauls a fresh sign out from the
 	// tower (where the game left it parked) — eased in the rAF loop
-	let slideX = $state(entering ? -SWING_SPAN : 0);
+	let slideX = $state(untrack(() => entering) ? -SWING_SPAN : 0);
 	let signDropY = $state(0);
 	let dropping = $state(false);
 	let starting = $state(false);
