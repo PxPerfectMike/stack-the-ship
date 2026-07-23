@@ -155,7 +155,9 @@
 		class="bird"
 		class:hop={b.hop}
 		class:flying={b.state !== 'perched'}
-		style="transform: translate({b.x}px, {b.y}px); transition: transform {b.dur}ms cubic-bezier(0.45, 0.2, 0.35, 1); --hop-t: {BIRD_HOP_MS}ms; --flap-t: {BIRD_FLAP_MS}ms"
+		style="transform: translate({b.x}px, {b.y}px); opacity: {b.state === 'gone'
+			? 0
+			: 1}; transition: transform {b.dur}ms cubic-bezier(0.45, 0.2, 0.35, 1), opacity 500ms ease; --hop-t: {BIRD_HOP_MS}ms; --flap-t: {BIRD_FLAP_MS}ms"
 	>
 		<g style="transform: scaleX({b.face})">
 			<GullArt />

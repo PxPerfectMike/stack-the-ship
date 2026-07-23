@@ -83,6 +83,7 @@
 		lx: number; // live position (sign-local), CSS transition does the flight
 		ly: number;
 		state: 'air' | 'perched';
+		hidden: boolean; // fades in on approach, out on exit — no mid-sky pops
 	}
 	let signGull = $state<SignGull | null>(null);
 
@@ -146,10 +147,10 @@
 		if (dropping || starting || signGone || signGull) return;
 		const x = (Math.random() < 0.5 ? -1 : 1) * rand(50, 125);
 		const face: 1 | -1 = x < 0 ? 1 : -1;
-		signGull = { x, face, lx: x - face * 190, ly: -70, state: 'air' };
+		signGull = { x, face, lx: x - face * 190, ly: -70, state: 'air', hidden: true };
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => {
-				if (signGull) signGull = { ...signGull, lx: x, ly: 121 };
+				if (signGull) signGull = { ...signGull, lx: x, ly: 121, hidden: false };
 			})
 		);
 		later(GULL_FLY_MS, () => {
@@ -160,7 +161,7 @@
 		later(GULL_FLY_MS + rand(5000, 11000), () => {
 			if (!signGull || dropping) return;
 			signOmega -= x * GULL_PUSHOFF;
-			signGull = { ...signGull, state: 'air', lx: x + face * 210, ly: -90 };
+			signGull = { ...signGull, state: 'air', lx: x + face * 210, ly: -90, hidden: true };
 			later(GULL_FLY_MS + 80, () => {
 				signGull = null;
 				later(rand(6000, 14000), gullVisit);
@@ -324,7 +325,9 @@
 					<g
 						class="sgull"
 						class:flying={signGull.state === 'air'}
-						style="transform: translate({signGull.lx}px, {signGull.ly}px); transition: transform {GULL_FLY_MS}ms cubic-bezier(0.45, 0.2, 0.35, 1)"
+						style="transform: translate({signGull.lx}px, {signGull.ly}px); opacity: {signGull.hidden
+							? 0
+							: 1}; transition: transform {GULL_FLY_MS}ms cubic-bezier(0.45, 0.2, 0.35, 1), opacity 450ms ease"
 					>
 						<g style="transform: scaleX({signGull.face})">
 							<GullArt />
