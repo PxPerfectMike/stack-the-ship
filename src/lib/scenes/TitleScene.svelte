@@ -55,9 +55,16 @@
 	let signOmega = 0;
 	let signDropY = $state(0);
 	let dropping = $state(false);
+	let starting = $state(false);
 	let dropVy = 0;
 	let splash = $state<{ x: number; key: number } | null>(null);
 	let signGone = $state(false);
+	// near-miss release: poll the departing vessel and let go of the sign so
+	// it falls through the space the stern JUST vacated
+	let awaitingMiss = false;
+	let missPrevTx = 0;
+	let missPrevT = 0;
+	let vesselEl: SVGGElement | undefined;
 
 	// --- ambient ship loop -----------------------------------------------------
 	let dockPhase = $state<'gone' | 'arriving' | 'docked' | 'departing'>('docked');
@@ -98,6 +105,7 @@
 	}
 
 	function beginDeparture(): void {
+		if (starting) return;
 		emit('ship-departing');
 		birdsRest = [];
 		dockPhase = 'departing';
@@ -110,6 +118,7 @@
 	}
 
 	function beginArrival(): void {
+		if (starting) return;
 		vesselName = shipName(`title-${Math.random()}`);
 		makePile();
 		dockPhase = 'arriving';
@@ -132,7 +141,7 @@
 	// the sign with its weight while perched, then visibly pushes off and
 	// leaves. Every impulse has an on-screen actor.
 	function gullVisit(): void {
-		if (dropping || signGone || signGull) return;
+		if (dropping || starting || signGone || signGull) return;
 		const x = (Math.random() < 0.5 ? -1 : 1) * rand(50, 125);
 		const face: 1 | -1 = x < 0 ? 1 : -1;
 		signGull = { x, face, lx: x - face * 190, ly: -70, state: 'air' };
@@ -158,6 +167,20 @@
 	}
 
 	function stepSign(tNow: number, dt: number): void {
+		if (awaitingMiss && vesselEl) {
+			// board spans x 110..430; release once the stern (hull left edge)
+			// will clear the board's right edge by the time the board reaches
+			// deck height (~580ms of fall)
+			const tx = new DOMMatrixReadOnly(getComputedStyle(vesselEl).transform).m41;
+			const v = missPrevT ? (tx - missPrevTx) / Math.max(1, tNow - missPrevT) : 0;
+			missPrevTx = tx;
+			missPrevT = tNow;
+			const stern = WORLD.hullLeft + tx;
+			if (stern + v * 580 > 452) {
+				awaitingMiss = false;
+				dropping = true;
+			}
+		}
 		let remaining = Math.min(dt, 80);
 		while (remaining > 0) {
 			const h = Math.min(4, remaining);
@@ -188,14 +211,34 @@
 	}
 
 	function handleStart(): void {
-		if (dropping) return;
+		if (dropping || starting) return;
 		if (reduced) {
 			onstart();
 			return;
 		}
-		// a perched gull rides the sign down — its own fault for sitting there
-		dropping = true;
+		starting = true;
 		emit('spill'); // every gull in the harbor takes it personally
+		// a perched gull rides the sign down — its own fault for sitting there
+		if (dockPhase === 'gone') {
+			dropping = true;
+			return;
+		}
+		// send the ship off; the sign releases to just miss the departing stern
+		if (dockPhase !== 'departing') {
+			emit('ship-departing');
+			birdsRest = [];
+			dockPhase = 'departing';
+			vesselTransition = `transform ${SHIP_DEPART_MS}ms ${EASE_DEPART}`;
+			vesselTx = 680;
+		}
+		awaitingMiss = true;
+		// bulletproof fallback: never leave the player waiting on a stall
+		later(SHIP_DEPART_MS + 1500, () => {
+			if (awaitingMiss) {
+				awaitingMiss = false;
+				dropping = true;
+			}
+		});
 	}
 
 	onMount(() => {
@@ -245,7 +288,10 @@
 
 	<!-- ambient vessel with its pre-stacked absurd pile -->
 	{#if dockPhase !== 'gone'}
-		<g style="transform: translateX({vesselTx}px); transition: {vesselTransition}">
+		<g
+			bind:this={vesselEl}
+			style="transform: translateX({vesselTx}px); transition: {vesselTransition}"
+		>
 			<Ship name={vesselName} />
 			{#each pile as b, i (i)}
 				<g transform="translate({b.x} {b.y}) rotate({b.angleDeg}) translate({b.ox} {b.oy})">
@@ -345,7 +391,7 @@
 	<Dock />
 
 	<!-- harbor manifest + start -->
-	{#if !dropping}
+	{#if !starting}
 		<g class="card">
 			<rect x="80" y="330" width="380" height="176" rx="16" fill="var(--overlay-card)" />
 			<text x="270" y="362" text-anchor="middle" class="m-head">HARBOR MANIFEST</text>
