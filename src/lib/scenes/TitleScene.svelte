@@ -64,7 +64,7 @@
 	let awaitingMiss = false;
 	let missPrevTx = 0;
 	let missPrevT = 0;
-	let vesselEl: SVGGElement | undefined;
+	let vesselEl = $state<SVGGElement | undefined>();
 
 	// --- ambient ship loop -----------------------------------------------------
 	let dockPhase = $state<'gone' | 'arriving' | 'docked' | 'departing'>('docked');
