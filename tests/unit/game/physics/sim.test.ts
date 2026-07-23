@@ -143,6 +143,41 @@ describe('sim', () => {
 		runToRest(sim);
 		expect(isOverboard(restState(sim))).toBe(true);
 	});
+	it('a tire dropped on the car hood rolls down the wedge onto the deck', () => {
+		const sim = createSim();
+		// delorean resting on deck (scaled h 46.8 → centre ≈ 736)
+		rebuildFromRest(sim, [{ cargoId: 'delorean', x: 250, y: 736, angle: 0 }]);
+		spawnCargo(sim, 'tire', 300, 650); // over the sloped hood
+		runToRest(sim);
+		const rest = restState(sim);
+		expect(isOverboard(rest)).toBe(false);
+		// old box physics: tire perches on the invisible flat roof (~y 685);
+		// wedge physics: it rolls down toward the nose and ends on the deck
+		expect(rest[1].y).toBeGreaterThan(710);
+		expect(rest[1].x).toBeGreaterThan(320);
+	});
+	it('a crate on the duck shoulder slides off the rounded blob', () => {
+		const sim = createSim();
+		rebuildFromRest(sim, [{ cargoId: 'duck', x: 270, y: 721, angle: 0 }]);
+		spawnCargo(sim, 'crate', 226, 620); // over the old invisible corner
+		runToRest(sim);
+		const rest = restState(sim);
+		expect(isOverboard(rest)).toBe(false);
+		// a square corner would have caught it at stack height (~y 678)
+		expect(rest[1].y).toBeGreaterThan(700);
+	});
+	it('rebuildFromRest restores polygon compounds at their exact pose', () => {
+		const sim = createSim();
+		spawnCargo(sim, 'delorean', 270, 400);
+		runToRest(sim);
+		const rest = restState(sim);
+		const sim2 = createSim();
+		rebuildFromRest(sim2, rest);
+		const rebuilt = restState(sim2);
+		expect(rebuilt[0].x).toBeCloseTo(rest[0].x, 5);
+		expect(rebuilt[0].y).toBeCloseTo(rest[0].y, 5);
+		expect(rebuilt[0].angle).toBeCloseTo(rest[0].angle, 5);
+	});
 	it('rebuildFromRest restores compound bodies at their exact pose', () => {
 		const sim = createSim();
 		spawnCargo(sim, 'bathtub', 270, 400);

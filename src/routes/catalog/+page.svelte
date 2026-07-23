@@ -16,8 +16,10 @@
 				{#each def.parts as p, j (j)}
 					{#if p.kind === 'rect'}
 						<rect x={p.x - p.w / 2} y={p.y - p.h / 2} width={p.w} height={p.h} fill="#dfe9ef" />
-					{:else}
+					{:else if p.kind === 'circle'}
 						<circle cx={p.x} cy={p.y} r={p.r} fill="#dfe9ef" />
+					{:else}
+						<polygon points={p.verts.map((v) => `${v.x},${v.y}`).join(' ')} fill="#dfe9ef" />
 					{/if}
 				{/each}
 				<CargoArt id={def.id} />

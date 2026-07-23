@@ -1,4 +1,4 @@
-import { Bodies, Body, Composite, Engine, Events } from 'matter-js';
+import { Bodies, Body, Composite, Engine, Events, Vertices } from 'matter-js';
 import { getCargo } from '../cargo';
 import { WORLD, type RestBody } from '../rules';
 
@@ -34,6 +34,11 @@ export interface RunState {
 
 export function createSim(): Sim {
 	const engine = Engine.create();
+	// Crisper contacts: heavier iteration budget keeps the anvil from sinking
+	// into stacks and tightens polygon edge collisions. Trivial cost at our
+	// body counts.
+	engine.positionIterations = 10;
+	engine.velocityIterations = 8;
 	const deck = Bodies.rectangle(
 		(WORLD.deckLeft + WORLD.deckRight) / 2,
 		WORLD.deckY + 20,
@@ -85,11 +90,15 @@ export function createSim(): Sim {
 export function spawnCargo(sim: Sim, cargoId: string, x: number, y: number): Body {
 	const def = getCargo(cargoId);
 	const opts = { density: def.density, restitution: def.restitution, friction: def.friction };
-	const parts = def.parts.map((p) =>
-		p.kind === 'circle'
-			? Bodies.circle(x + p.x, y + p.y, p.r, opts)
-			: Bodies.rectangle(x + p.x, y + p.y, p.w, p.h, opts)
-	);
+	const parts = def.parts.map((p) => {
+		if (p.kind === 'circle') return Bodies.circle(x + p.x, y + p.y, p.r, opts);
+		if (p.kind === 'rect') return Bodies.rectangle(x + p.x, y + p.y, p.w, p.h, opts);
+		// fromVertices positions the body's CENTROID at the given point, so
+		// offset by the polygon's own centroid to keep authored coordinates.
+		// Pass a copy — Matter sorts vertex arrays in place and defs are shared.
+		const c = Vertices.centre(p.verts);
+		return Bodies.fromVertices(x + c.x, y + c.y, [p.verts.map((v) => ({ x: v.x, y: v.y }))], opts);
+	});
 	const body = parts.length === 1 ? parts[0] : Body.create({ parts, ...opts });
 	Composite.add(sim.engine.world, body);
 	// Compound bodies centre on their parts' centroid; remember where the def
@@ -126,8 +135,14 @@ export function onCollision(sim: Sim, cb: () => void): void {
 	Events.on(sim.engine, 'collisionStart', () => cb());
 }
 
+// Two substeps per visual frame: halves penetration depth on hard landings
+// and keeps polygon edges from tunnelling, at negligible cost.
+const SUBSTEPS = 2;
+
 export function step(sim: Sim): void {
-	Engine.update(sim.engine, FRAME_MS);
+	for (let i = 0; i < SUBSTEPS; i++) {
+		Engine.update(sim.engine, FRAME_MS / SUBSTEPS);
+	}
 }
 
 export function newRunState(): RunState {

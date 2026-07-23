@@ -60,8 +60,14 @@
 									fill="#ff2fa0"
 									opacity="0.25"
 								/>
-							{:else}
+							{:else if p.kind === 'circle'}
 								<circle cx={p.x} cy={p.y} r={p.r} fill="#ff2fa0" opacity="0.25" />
+							{:else}
+								<polygon
+									points={p.verts.map((v) => `${v.x},${v.y}`).join(' ')}
+									fill="#ff2fa0"
+									opacity="0.25"
+								/>
 							{/if}
 						{/each}
 					{/if}
