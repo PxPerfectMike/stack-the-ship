@@ -51,11 +51,13 @@
 		onCollision,
 		restState,
 		spawnCargo,
+		step,
 		type CargoPose,
 		type PartShape,
+		type RunState,
 		type Sim
 	} from '$lib/game/physics/sim';
-	import { beginSimulating, resolveToss, session, startMatch } from '$lib/game/store';
+	import { beginSimulating, lateSpill, resolveToss, session, startMatch } from '$lib/game/store';
 
 	const amb = sessionAmbience(location.search);
 
@@ -81,7 +83,6 @@
 	let vesselName = $state('');
 	let pendingRelease = $state<{ x: number; y: number; input: TossInput } | null>(null);
 	let splash = $state<{ x: number; key: number } | null>(null);
-	let raf = 0;
 	let trolleyRaf = 0;
 	let fast = 1;
 	let firstMatch = true;
@@ -115,6 +116,7 @@
 		debug = params.get('debug') === '1';
 		const difficulty = Number(params.get('difficulty') ?? 1) as 1 | 2 | 3;
 		sim = createSim();
+		activeRun = null;
 		onCollision(sim, () => {
 			if (!tossImpacted) {
 				tossImpacted = true;
@@ -153,31 +155,55 @@
 		later(SHIP_ARRIVE_MS / fast + 100, () => (dockPhase = 'docked'));
 	}
 
+	// Physics never sleeps: one persistent loop steps the sim every frame for
+	// the whole match. A toss just hands the loop a RunState to watch; between
+	// turns the same engine keeps running so residual motion settles naturally
+	// on screen instead of freezing mid-wobble.
+	let activeRun: RunState | null = null;
+
 	function doDrop(r: { x: number; y: number; input: TossInput }): void {
 		const body = spawnCargo(sim, $session.currentCargo, r.x, r.y);
 		applyToss(body, r.input);
 		beginSimulating();
 		tossImpacted = false;
 		emit('toss-launched');
-		const rs = newRunState();
-		const loop = (): void => {
-			advance(sim, rs, fast);
+		activeRun = newRunState();
+	}
+
+	function spillSplash(rest: { x: number; y: number }[]): void {
+		const sunk = rest.find((b) => b.y > WORLD.waterlineY);
+		splash = { x: sunk?.x ?? WORLD.width / 2, key: Date.now() };
+		emit('spill');
+	}
+
+	function physFrame(): void {
+		if (activeRun) {
+			advance(sim, activeRun, fast);
 			syncView();
-			if (rs.done) {
+			if (activeRun.done) {
+				activeRun = null;
 				const rest = restState(sim);
 				if (isOverboard(rest)) {
-					const sunk = rest.find((b) => b.y > WORLD.waterlineY);
-					splash = { x: sunk?.x ?? WORLD.width / 2, key: Date.now() };
-					emit('spill');
+					spillSplash(rest);
 				} else {
 					emit('settled');
 				}
 				resolveToss(rest);
-			} else {
-				raf = requestAnimationFrame(loop);
 			}
-		};
-		raf = requestAnimationFrame(loop);
+			return;
+		}
+		// idle: keep the world honest while players aim (or the ship departs)
+		if ($session.rest.length > 0 && $session.phase !== 'idle') {
+			for (let i = 0; i < fast; i++) step(sim);
+			syncView();
+			if ($session.phase === 'aiming') {
+				const rest = restState(sim);
+				if (isOverboard(rest)) {
+					spillSplash(rest);
+					lateSpill(rest);
+				}
+			}
+		}
 	}
 
 	// Anticipation before action (spec §1): freeze the hang point, dip the
@@ -253,6 +279,7 @@
 
 	onMount(() => {
 		const trolleyLoop = (): void => {
+			physFrame();
 			const now = performance.now() - swingBase;
 			const active = $session.phase === 'aiming' && dockPhase === 'docked';
 			if (active && !pendingRelease) {
@@ -271,7 +298,6 @@
 		trolleyRaf = requestAnimationFrame(trolleyLoop);
 		newMatch();
 		return () => {
-			cancelAnimationFrame(raf);
 			cancelAnimationFrame(trolleyRaf);
 			timers.forEach(clearTimeout);
 		};

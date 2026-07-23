@@ -65,3 +65,14 @@ export function resolveToss(rest: RestBody[]): void {
 		currentCargo: dealCargo(s.matchSeed, turn, s.gentle ? GENTLE_POOL : undefined)
 	});
 }
+
+// Physics never sleeps: if the stack collapses into the sea BETWEEN turns,
+// the previous tosser (whose drop destabilised it) loses. Sudden death means
+// the sea can rule at any time.
+export function lateSpill(rest: RestBody[]): void {
+	session.update((s) =>
+		s.phase === 'aiming' && s.turn > 0
+			? { ...s, phase: 'over', rest, loser: (s.active === 0 ? 1 : 0) as 0 | 1 }
+			: s
+	);
+}

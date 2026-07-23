@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { WORLD } from '$lib/game/rules';
-import { beginSimulating, resolveToss, session, startMatch } from '$lib/game/store';
+import { beginSimulating, lateSpill, resolveToss, session, startMatch } from '$lib/game/store';
 
 const onDeck = { cargoId: 'crate', x: 270, y: 700, angle: 0 };
 const inSea = { cargoId: 'crate', x: 520, y: WORLD.waterlineY + 10, angle: 0 };
@@ -36,6 +36,26 @@ describe('session store', () => {
 		const s = get(session);
 		expect(s.phase).toBe('over');
 		expect(s.loser).toBe(1);
+	});
+
+	it('a between-turns collapse blames the previous tosser', () => {
+		beginSimulating();
+		resolveToss([onDeck]); // player 0 tossed safely; player 1 now aiming
+		lateSpill([inSea]);
+		const s = get(session);
+		expect(s.phase).toBe('over');
+		expect(s.loser).toBe(0);
+	});
+
+	it('lateSpill is a no-op before any toss or after the match ends', () => {
+		lateSpill([inSea]);
+		expect(get(session).phase).toBe('aiming'); // turn 0: nothing to collapse
+		beginSimulating();
+		resolveToss([inSea]); // match over, loser 0
+		lateSpill([inSea]);
+		const s = get(session);
+		expect(s.phase).toBe('over');
+		expect(s.loser).toBe(0);
 	});
 
 	it('startMatch fully resets after a finished match', () => {
