@@ -15,6 +15,7 @@ export const BIRD_RETURN_MIN_MS = 1800;
 export const BIRD_RETURN_SPAN_MS = 2600;
 export const BIRD_HOP_MS = 220;
 export const BIRD_FLAP_MS = 150;
+export const TROLLEY_PARK_MS = 800;
 export const BIRD_IDLE_MIN_MS = 2400;
 export const BIRD_IDLE_SPAN_MS = 4200;
 export const OVERLAY_IN_MS = 450;

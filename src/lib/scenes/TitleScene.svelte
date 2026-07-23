@@ -27,14 +27,15 @@
 	import { WORLD, type RestBody } from '$lib/game/rules';
 	import { sessionAmbience } from '$lib/game/sessionAmbience';
 	import { shipName } from '$lib/game/shipNames';
-	import { SWING_CENTER_X, TROLLEY_Y } from '$lib/game/swing';
+	import { SWING_CENTER_X, SWING_SPAN, TROLLEY_Y } from '$lib/game/swing';
 	import {
 		EASE_ARRIVE,
 		EASE_DEPART,
 		EASE_POP,
 		OVERLAY_IN_MS,
 		SHIP_ARRIVE_MS,
-		SHIP_DEPART_MS
+		SHIP_DEPART_MS,
+		TROLLEY_PARK_MS
 	} from '$lib/game/timing';
 
 	let { onstart }: { onstart: () => void } = $props();
@@ -346,23 +347,21 @@
 	{/if}
 
 	<Crane />
-	<rect
-		x={SWING_CENTER_X - 16}
-		y="84"
-		width="32"
-		height="18"
-		rx="6"
-		fill="var(--rope)"
+	<!-- trolley: after releasing the sign it retracts to the tower — exactly
+	     where GameScene's trolley starts, so the handoff is seamless -->
+	<g
 		pointer-events="none"
-	/>
+		style="transform: translateX({starting ? -SWING_SPAN : 0}px); transition: transform {TROLLEY_PARK_MS}ms cubic-bezier(0.4, 0, 0.3, 1) 250ms"
+	>
+		<rect x={SWING_CENTER_X - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
+	</g>
 
 	<Birds rest={birdsRest} />
 
 	<Dock />
 
 	<!-- harbor manifest + start -->
-	{#if !starting}
-		<g class="card">
+	<g class="card" class:out={starting}>
 			<rect x="80" y="330" width="380" height="176" rx="16" fill="var(--overlay-card)" />
 			<text x="270" y="362" text-anchor="middle" class="m-head">HARBOR MANIFEST</text>
 			{#each [{ l: 'STACK THE CARGO', s: 'REQUIRED', c: '#2e7d4f' }, { l: 'SPILL NOTHING', s: 'SUDDEN DEATH', c: '#b93a3a' }, { l: 'FEEDING THE GULLS', s: 'IGNORED', c: '#8a7f6a' }, { l: 'NOW DOCKING', s: dockPhase === 'docked' || dockPhase === 'arriving' ? vesselName : 'STANDBY', c: '#17323f' }] as row, ri (ri)}
@@ -391,8 +390,7 @@
 				<rect x="150" y="532" width="240" height="58" rx="16" fill="var(--crane)" />
 				<text x="270" y="569" text-anchor="middle" class="start-label">Start Loading</text>
 			</g>
-		</g>
-	{/if}
+	</g>
 </svg>
 
 <style>
@@ -441,6 +439,16 @@
 		from {
 			opacity: 0;
 			scale: 0.85;
+		}
+	}
+	.card.out {
+		animation: card-out 240ms ease-in forwards;
+		pointer-events: none;
+	}
+	@keyframes card-out {
+		to {
+			opacity: 0;
+			scale: 0.9;
 		}
 	}
 	.start {

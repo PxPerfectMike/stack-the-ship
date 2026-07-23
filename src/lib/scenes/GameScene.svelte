@@ -22,6 +22,7 @@
 		ROPE_L,
 		stepPend,
 		SWING_CENTER_X,
+		SWING_SPAN,
 		TROLLEY_Y,
 		trolleyX,
 		type PendState,
@@ -36,7 +37,9 @@
 		EASE_POP,
 		OVERLAY_IN_MS,
 		SHIP_ARRIVE_MS,
-		SHIP_DEPART_MS
+		SHIP_DEPART_MS,
+		SWING_PERIOD_MS,
+		TROLLEY_PARK_MS
 	} from '$lib/game/timing';
 	import {
 		advance,
@@ -60,9 +63,16 @@
 	let view = $state<CargoPose[]>([]);
 	let debugView = $state<{ cargoId: string; parts: PartShape[] }[]>([]);
 	let debug = $state(false);
-	let trolleyPos = $state(SWING_CENTER_X);
+	// Trolley parks by the tower (the swing's left extreme) between drops and
+	// matches — the title screen leaves it in exactly this spot, so scene
+	// handoffs are seamless. Each turn the swing clock starts at the left
+	// extreme with zero velocity: the trolley accelerates out naturally.
+	const PARKED_X = SWING_CENTER_X - SWING_SPAN;
+	let trolleyPos = $state(PARKED_X);
+	let trolleyTransition = $state('none');
+	let swingBase = performance.now();
 	let pend: PendState = newPend();
-	let bob = $state({ x: SWING_CENTER_X, y: TROLLEY_Y + ROPE_L });
+	let bob = $state({ x: PARKED_X, y: TROLLEY_Y + ROPE_L });
 	let lastT = 0;
 	let dockPhase = $state<'arriving' | 'docked' | 'departing'>('arriving');
 	let vesselTx = $state(-660);
@@ -78,7 +88,6 @@
 	let botRng = mulberry32(1);
 	let svgEl: SVGSVGElement;
 	let timers: ReturnType<typeof setTimeout>[] = [];
-	const t0 = performance.now();
 
 	const hanging = $derived($session.phase === 'aiming' ? getCargo($session.currentCargo) : null);
 	const spilledName = $derived.by(() => {
@@ -175,7 +184,7 @@
 	// cable for a beat, then let go.
 	function beginRelease(): void {
 		if ($session.phase !== 'aiming' || dockPhase !== 'docked' || pendingRelease) return;
-		pendingRelease = releaseFromPend(pend, performance.now() - t0);
+		pendingRelease = releaseFromPend(pend, performance.now() - swingBase);
 		later(CRANE_DROP_ANTICIPATION_MS / fast, () => {
 			if (pendingRelease) {
 				doDrop(pendingRelease);
@@ -201,7 +210,7 @@
 				if (
 					target.armed &&
 					!pendingRelease &&
-					Math.abs(predictedLandingXPend(pend, performance.now() - t0) - target.x) <
+					Math.abs(predictedLandingXPend(pend, performance.now() - swingBase) - target.x) <
 						RELEASE_TOLERANCE[$session.difficulty]
 				) {
 					beginRelease();
@@ -214,6 +223,16 @@
 				clearTimeout(think);
 				cancelAnimationFrame(watchRaf);
 			};
+		}
+	});
+
+	// Each aiming turn begins with the trolley parked at the tower: rebase the
+	// swing clock to the left extreme (zero velocity) and re-hang the rope.
+	$effect(() => {
+		if ($session.phase === 'aiming' && dockPhase === 'docked') {
+			swingBase = performance.now() + SWING_PERIOD_MS / 4;
+			pend = newPend();
+			bob = { x: PARKED_X, y: TROLLEY_Y + ROPE_L };
 		}
 	});
 
@@ -234,11 +253,17 @@
 
 	onMount(() => {
 		const trolleyLoop = (): void => {
-			const now = performance.now() - t0;
-			if ($session.phase === 'aiming' && !pendingRelease) {
+			const now = performance.now() - swingBase;
+			const active = $session.phase === 'aiming' && dockPhase === 'docked';
+			if (active && !pendingRelease) {
+				trolleyTransition = 'none';
 				pend = stepPend(pend, lastT, now - lastT);
 				trolleyPos = trolleyX(now);
 				bob = { x: bobX(pend, now), y: bobY(pend) };
+			} else if (!active && trolleyPos !== PARKED_X) {
+				// glide home to the tower to fetch the next item
+				trolleyTransition = `transform ${TROLLEY_PARK_MS}ms cubic-bezier(0.4, 0, 0.3, 1)`;
+				trolleyPos = PARKED_X;
 			}
 			lastT = now;
 			trolleyRaf = requestAnimationFrame(trolleyLoop);
@@ -314,11 +339,17 @@
 	<!-- dockside gantry crane -->
 	<Crane />
 
+	<!-- trolley: always present, parks by the tower between drops -->
+	<g
+		pointer-events="none"
+		style="transform: translateX({trolleyPos - SWING_CENTER_X}px); transition: {trolleyTransition}"
+	>
+		<rect x={SWING_CENTER_X - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
+		<circle cx={SWING_CENTER_X - 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
+		<circle cx={SWING_CENTER_X + 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
+	</g>
 	{#if hanging && dockPhase === 'docked'}
 		<g pointer-events="none">
-			<rect x={trolleyPos - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
-			<circle cx={trolleyPos - 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
-			<circle cx={trolleyPos + 8} cy="104" r="3.5" fill="var(--ink)" opacity="0.6" />
 			<g class="hang" class:dip={pendingRelease !== null}>
 				<!-- rope runs behind the item to its centre — same length for every item -->
 				<line
