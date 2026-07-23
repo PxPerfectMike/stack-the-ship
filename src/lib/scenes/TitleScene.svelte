@@ -174,10 +174,16 @@
 			}
 			remaining -= h;
 		}
-		if (dropping && !signGone && TROLLEY_Y + SIGN_L + signDropY > 850) {
-			signGone = true;
-			splash = { x: SWING_CENTER_X + SIGN_L * Math.sin(signTheta), key: Date.now() };
-			later(700, onstart);
+		if (dropping) {
+			// splash the moment the board's bottom edge breaks the surface;
+			// the sign keeps falling and sinks behind the water layer
+			if (!splash && TROLLEY_Y + signDropY + 216 > 884) {
+				splash = { x: SWING_CENTER_X + 168 * Math.sin(signTheta), key: Date.now() };
+				later(950, onstart);
+			}
+			if (!signGone && TROLLEY_Y + signDropY + 118 > 905) {
+				signGone = true;
+			}
 		}
 	}
 
@@ -214,6 +220,18 @@
 	});
 
 	const signThetaDeg = $derived((signTheta * 180) / Math.PI);
+
+	// droplet fan for the big splash: each flies a real parabola (linear x,
+	// eased up-then-down y) with slight stagger
+	const SPLASH_DROPS = [
+		{ dx: -46, dy: -38, delay: 40, r: 2.4 },
+		{ dx: -30, dy: -56, delay: 0, r: 3.2 },
+		{ dx: -14, dy: -66, delay: 70, r: 2.6 },
+		{ dx: 2, dy: -72, delay: 20, r: 3.6 },
+		{ dx: 16, dy: -62, delay: 90, r: 2.4 },
+		{ dx: 32, dy: -52, delay: 30, r: 3 },
+		{ dx: 48, dy: -34, delay: 60, r: 2.2 }
+	];
 </script>
 
 <svg
@@ -244,23 +262,9 @@
 		</g>
 	{/if}
 
-	<rect y="886" width={WORLD.width} height="74" fill="var(--water-deep)" pointer-events="none" />
-	{#if splash}
-		{#key splash.key}
-			<g class="splash" transform="translate({splash.x} 884)" pointer-events="none">
-				<ellipse rx="22" ry="6" fill="none" stroke="var(--foam)" stroke-width="4" />
-				<circle cx="-13" cy="-9" r="3.5" fill="var(--foam)" />
-				<circle cx="10" cy="-13" r="2.8" fill="var(--foam)" />
-			</g>
-		{/key}
-	{/if}
-
-	<Crane />
-
-	<!-- the title sign, hanging from the trolley -->
+	<!-- the title sign — drawn BEFORE the water layer so it genuinely sinks -->
 	{#if !signGone}
 		<g pointer-events="none">
-			<rect x={SWING_CENTER_X - 16} y="84" width="32" height="18" rx="6" fill="var(--rope)" />
 			<g transform="translate({SWING_CENTER_X} {TROLLEY_Y + signDropY}) rotate({signThetaDeg})">
 				<circle cx="0" cy="2" r="5" fill="none" stroke="var(--rope)" stroke-width="3.5" />
 				<line x1="0" y1="5" x2="-100" y2="124" stroke="var(--rope)" stroke-width="3" />
@@ -302,6 +306,39 @@
 			</g>
 		</g>
 	{/if}
+
+	<rect y="886" width={WORLD.width} height="74" fill="var(--water-deep)" pointer-events="none" />
+
+	{#if splash}
+		{#key splash.key}
+			<g class="bigsplash" transform="translate({splash.x} 884)" pointer-events="none">
+				<ellipse class="s-ring" rx="24" ry="6" fill="none" stroke="var(--foam)" stroke-width="3.5" />
+				<path
+					class="s-crown"
+					d="M -40 2 Q -42 -14 -32 -30 Q -27 -12 -20 -26 Q -16 -8 -9 -22 Q -5 -6 0 -20 Q 5 -6 9 -22 Q 16 -8 20 -26 Q 27 -12 32 -30 Q 42 -14 40 2 Z"
+					fill="var(--foam)"
+				/>
+				{#each SPLASH_DROPS as d, di (di)}
+					<g class="s-dx" style="--dx: {d.dx}px; --dd: {d.delay}ms">
+						<circle class="s-dy" style="--dy: {d.dy}px; --dd: {d.delay}ms" r={d.r} fill="var(--foam)" />
+					</g>
+				{/each}
+				<circle class="s-bob" style="--bx: -30px" cy="-2" r="3" fill="var(--foam)" />
+				<circle class="s-bob" style="--bx: 26px" cy="-1" r="2.4" fill="var(--foam)" />
+			</g>
+		{/key}
+	{/if}
+
+	<Crane />
+	<rect
+		x={SWING_CENTER_X - 16}
+		y="84"
+		width="32"
+		height="18"
+		rx="6"
+		fill="var(--rope)"
+		pointer-events="none"
+	/>
 
 	<Birds rest={birdsRest} />
 
@@ -413,22 +450,92 @@
 			rotate: -55deg;
 		}
 	}
-	.splash {
-		animation: splash-out 800ms ease-out forwards;
+
+	/* ===== the big splash: ring + crown + parabolic droplets + foam ===== */
+	.s-ring {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: s-ring 900ms ease-out forwards;
 	}
-	@keyframes splash-out {
+	@keyframes s-ring {
 		from {
-			opacity: 0.95;
-			scale: 0.4;
+			opacity: 0.9;
+			transform: scale(0.5, 0.6);
 		}
 		to {
 			opacity: 0;
-			scale: 2.4;
+			transform: scale(2.7, 1.5);
+		}
+	}
+	.s-crown {
+		transform-box: fill-box;
+		transform-origin: 50% 100%;
+		animation: s-crown 560ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+	}
+	@keyframes s-crown {
+		0% {
+			opacity: 0.95;
+			transform: scale(0.5, 0.1);
+		}
+		40% {
+			opacity: 0.95;
+			transform: scale(1, 1);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(1.2, 0.12);
+		}
+	}
+	.s-dx {
+		animation: s-dx 680ms linear var(--dd) both;
+	}
+	@keyframes s-dx {
+		to {
+			transform: translateX(var(--dx));
+		}
+	}
+	.s-dy {
+		animation: s-dy 680ms linear var(--dd) both;
+	}
+	@keyframes s-dy {
+		0% {
+			opacity: 0.95;
+			transform: translateY(0);
+			animation-timing-function: cubic-bezier(0.15, 0.65, 0.45, 1);
+		}
+		48% {
+			opacity: 0.95;
+			transform: translateY(var(--dy));
+			animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.4);
+		}
+		100% {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+	}
+	.s-bob {
+		animation: s-bob 950ms ease-out forwards;
+	}
+	@keyframes s-bob {
+		0% {
+			opacity: 0;
+			transform: translateX(0);
+		}
+		25% {
+			opacity: 0.9;
+		}
+		100% {
+			opacity: 0;
+			transform: translateX(var(--bx));
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.card,
-		.splash {
+		.s-ring,
+		.s-crown,
+		.s-dx,
+		.s-dy,
+		.s-bob {
 			animation: none;
 		}
 	}
