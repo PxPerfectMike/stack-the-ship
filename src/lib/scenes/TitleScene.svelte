@@ -327,7 +327,9 @@
 						class:flying={signGull.state === 'air'}
 						style="transform: translate({signGull.lx}px, {signGull.ly}px); opacity: {signGull.hidden
 							? 0
-							: 1}; transition: transform {GULL_FLY_MS}ms cubic-bezier(0.45, 0.2, 0.35, 1), opacity 450ms ease"
+							: 1}; transition: transform {GULL_FLY_MS}ms cubic-bezier(0.45, 0.2, 0.35, 1), opacity 250ms ease {signGull.hidden
+							? GULL_FLY_MS - 250
+							: 0}ms"
 					>
 						<g style="transform: scaleX({signGull.face})">
 							<GullArt />
