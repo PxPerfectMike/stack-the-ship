@@ -59,12 +59,10 @@
 	let dropVy = 0;
 	let splash = $state<{ x: number; key: number } | null>(null);
 	let signGone = $state(false);
-	// near-miss release: poll the departing vessel and let go of the sign so
-	// it falls through the space the stern JUST vacated
-	let awaitingMiss = false;
-	let missPrevTx = 0;
-	let missPrevT = 0;
-	let vesselEl = $state<SVGGElement | undefined>();
+	// the escape: on Start the ship guns it while the sign falls — the stern
+	// clears the board's footprint moments before the board passes deck height
+	const ESCAPE_MS = 1100;
+	const EASE_ESCAPE = 'cubic-bezier(0.2, 0.4, 0.45, 1)';
 
 	// --- ambient ship loop -----------------------------------------------------
 	let dockPhase = $state<'gone' | 'arriving' | 'docked' | 'departing'>('docked');
@@ -167,20 +165,6 @@
 	}
 
 	function stepSign(tNow: number, dt: number): void {
-		if (awaitingMiss && vesselEl) {
-			// board spans x 110..430; release once the stern (hull left edge)
-			// will clear the board's right edge by the time the board reaches
-			// deck height (~580ms of fall)
-			const tx = new DOMMatrixReadOnly(getComputedStyle(vesselEl).transform).m41;
-			const v = missPrevT ? (tx - missPrevTx) / Math.max(1, tNow - missPrevT) : 0;
-			missPrevTx = tx;
-			missPrevT = tNow;
-			const stern = WORLD.hullLeft + tx;
-			if (stern + v * 580 > 452) {
-				awaitingMiss = false;
-				dropping = true;
-			}
-		}
 		let remaining = Math.min(dt, 80);
 		while (remaining > 0) {
 			const h = Math.min(4, remaining);
@@ -218,27 +202,16 @@
 		}
 		starting = true;
 		emit('spill'); // every gull in the harbor takes it personally
-		// a perched gull rides the sign down — its own fault for sitting there
-		if (dockPhase === 'gone') {
-			dropping = true;
-			return;
-		}
-		// send the ship off; the sign releases to just miss the departing stern
-		if (dockPhase !== 'departing') {
+		// sign drops NOW; the ship simultaneously guns it out of the way and
+		// the board crashes into its wake. A perched gull rides the sign down.
+		dropping = true;
+		if (dockPhase !== 'gone' && dockPhase !== 'departing') {
 			emit('ship-departing');
 			birdsRest = [];
 			dockPhase = 'departing';
-			vesselTransition = `transform ${SHIP_DEPART_MS}ms ${EASE_DEPART}`;
+			vesselTransition = `transform ${ESCAPE_MS}ms ${EASE_ESCAPE}`;
 			vesselTx = 680;
 		}
-		awaitingMiss = true;
-		// bulletproof fallback: never leave the player waiting on a stall
-		later(SHIP_DEPART_MS + 1500, () => {
-			if (awaitingMiss) {
-				awaitingMiss = false;
-				dropping = true;
-			}
-		});
 	}
 
 	onMount(() => {
@@ -288,10 +261,7 @@
 
 	<!-- ambient vessel with its pre-stacked absurd pile -->
 	{#if dockPhase !== 'gone'}
-		<g
-			bind:this={vesselEl}
-			style="transform: translateX({vesselTx}px); transition: {vesselTransition}"
-		>
+		<g style="transform: translateX({vesselTx}px); transition: {vesselTransition}">
 			<Ship name={vesselName} />
 			{#each pile as b, i (i)}
 				<g transform="translate({b.x} {b.y}) rotate({b.angleDeg}) translate({b.ox} {b.oy})">
