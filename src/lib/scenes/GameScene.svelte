@@ -407,7 +407,7 @@
 	{#if overlayUp}
 		<rect width={WORLD.width} height={WORLD.height} fill="#0b2530" opacity="0.45" />
 		<g class="card">
-			<rect x="60" y="356" width="420" height="190" rx="20" fill="var(--overlay-card)" />
+			<rect x="60" y="356" width="420" height="240" rx="20" fill="var(--overlay-card)" />
 			<text x={WORLD.width / 2} y="412" text-anchor="middle" class="card-title">
 				{$session.loser === 0 ? 'Overboard.' : 'The Dockmaster fumbled it.'}
 			</text>
@@ -436,8 +436,8 @@
 					tabindex="-1"
 					style="cursor: pointer;"
 				>
-					<rect x={WORLD.width / 2 - 80} y="518" width="160" height="28" fill="transparent" />
-					<text x={WORLD.width / 2} y="537" text-anchor="middle" class="card-link">Back to port</text>
+					<rect x={WORLD.width / 2 - 92} y="524" width="184" height="52" rx="14" fill="#b9c6cd" />
+					<text x={WORLD.width / 2} y="558" text-anchor="middle" class="card-btn">Back to port</text>
 				</g>
 			{/if}
 		</g>
@@ -506,13 +506,6 @@
 	.card-btn {
 		font: 700 21px system-ui, sans-serif;
 		fill: #17323f;
-	}
-	.card-link {
-		font: 600 15px system-ui, sans-serif;
-		fill: #17323f;
-		opacity: 0.7;
-		text-decoration: underline;
-		text-underline-offset: 3px;
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.splash,
